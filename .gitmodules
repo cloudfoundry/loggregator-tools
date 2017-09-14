@@ -1,0 +1,3 @@
+[submodule "cf-logmon"]
+	path = cf-logmon
+	url = https://github.com/cloudfoundry-incubator/cf-logmon
