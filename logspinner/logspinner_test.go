@@ -52,7 +52,7 @@ var _ = Describe("Logspinner", func() {
 		Expect(string(lines[10])).To(Equal("msg 10 LogSpinner Log Message"))
 	})
 
-	It("with a custom log message", func() {
+	It("accepts with a custom log message", func() {
 		_, kill, stdout, _ := startLogSpinner(port)
 		defer kill()
 
