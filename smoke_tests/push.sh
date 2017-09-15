@@ -65,7 +65,7 @@ function restart_spinner_app {
 function push_counter_app {
     checkpoint "Pushing Counter App"
 
-    pushd counter
+    pushd ../counter
         if ! [ -e ./counter ]; then
             GOOS=linux go build
         fi
@@ -76,7 +76,7 @@ function push_counter_app {
 function push_drain_app {
     checkpoint "Pushing Drain App"
 
-    pushd "${DRAIN_TYPE}_drain"
+    pushd "../${DRAIN_TYPE}_drain"
         if ! [ -e "./${DRAIN_TYPE}_drain" ]; then
             GOOS=linux go build
         fi
@@ -104,7 +104,7 @@ function push_drain_app {
 function push_spinner_app {
     checkpoint "Pushing Spinner App"
 
-    pushd logspinner
+    pushd ../logspinner
         if ! [ -e ./logspinner ]; then
             GOOS=linux go build
         fi
