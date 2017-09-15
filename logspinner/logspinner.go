@@ -8,6 +8,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,7 +17,6 @@ import (
 
 func main() {
 	http.HandleFunc("/", rootResponse)
-
 	fmt.Println("listening...")
 	err := http.ListenAndServe(":"+os.Getenv("PORT"), nil)
 	if err != nil {
@@ -32,28 +32,35 @@ func rootResponse(res http.ResponseWriter, req *http.Request) {
 
 	delay, err := time.ParseDuration(req.FormValue("delay"))
 	if err != nil {
-		delay = time.Second
+		delay = 1000 * time.Millisecond
 	}
 
-	logText := (req.FormValue("text"))
-	if logText == "" {
-		logText = "LogSpinner Log Message"
+	id := req.FormValue("id")
+	if id == "" {
+		id = fmt.Sprintf("%d", time.Now().UnixNano())
 	}
 
-	go outputLog(cycleCount, delay, logText)
+	mode := "msgCount"
+	isPrimer := (req.FormValue("primer"))
+	if isPrimer == "true" {
+		mode = "primeCount"
+	}
 
-	fmt.Fprintf(res, "cycles %d, delay %s, text %s\n", cycleCount, delay, logText)
+	go outputLog(cycleCount, delay, id, mode)
+
+	fmt.Fprintf(res, "cycles %d, delay %s, id %s, mode %s\n", cycleCount, delay, id, mode)
 }
 
-func outputLog(cycleCount int, delay time.Duration, logText string) {
+func outputLog(cycleCount int, delay time.Duration, id, mode string) {
 	now := time.Now()
 	for i := 0; i < cycleCount; i++ {
-		fmt.Printf("msg %d %s\n", i+1, logText)
+		payload := fmt.Sprintf(`{"id":%q,"cycles":%d,"delay":%q,%q:1,"iteration":%d}`, id, cycleCount, delay, mode, i+1)
+		fmt.Println(payload)
 		time.Sleep(delay)
 	}
 	done := time.Now()
 	diff := done.Sub(now)
 
 	rate := float64(cycleCount) / diff.Seconds()
-	fmt.Printf("Duration %s TotalSent %d Rate %f \n", diff.String(), cycleCount, rate)
+	log.Printf("Duration %s TotalSent %d Rate %f", diff.String(), cycleCount, rate)
 }
