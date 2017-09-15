@@ -126,7 +126,7 @@ function ensure_drain_service {
 }
 
 function create_drain_service {
-    checkpoint "Creating Drain Service at $syslog_drain_service_url"
+    checkpoint "Creating Drain Service at $(syslog_drain_service_url)"
 
     cf create-user-provided-service \
         "$(syslog_drain_service_name)" \
