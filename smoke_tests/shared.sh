@@ -113,9 +113,9 @@ function syslog_drain_service_url {
 }
 
 function test_uuid {
-    if [ ! -e /tmp/test_uuid ]; then
-        cat /proc/sys/kernel/random/uuid > /tmp/test_uuid
+    if [ ! -e /tmp/test_uuid_${CYCLES}_${DELAY_US} ]; then
+        cat /proc/sys/kernel/random/uuid > "/tmp/test_uuid_${CYCLES}_${DELAY_US}"
     fi
 
-    cat /tmp/test_uuid
+    cat "/tmp/test_uuid_${JOB_NAME}_${CYCLES}_${DELAY_US}"
 }
