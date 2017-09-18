@@ -35,7 +35,7 @@ function hammer {
     curl "$(hammer_url)" &> /dev/null
 
     export -f block_until_count_equals_cycles
-    if ! timeout 180s bash -ec "block_until_count_equals_cycles"; then
+    if ! timeout "${WAIT:-180}s" bash -ec "block_until_count_equals_cycles"; then
         warning "timed out waiting for all the messages to be received"
     fi
 }
