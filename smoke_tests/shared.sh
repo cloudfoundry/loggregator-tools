@@ -117,5 +117,5 @@ function test_uuid {
         cat /proc/sys/kernel/random/uuid > "/tmp/test_uuid_${CYCLES}_${DELAY_US}"
     fi
 
-    cat "/tmp/test_uuid_${JOB_NAME}_${CYCLES}_${DELAY_US}"
+    cat "/tmp/test_uuid_${CYCLES}_${DELAY_US}"
 }
