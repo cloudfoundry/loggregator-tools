@@ -28,7 +28,7 @@ function datadog_url {
 }
 
 function post_to_datadog {
-    echo "posting $1 $2 $3"
+    echo "posting to datadog. name = $1, timestamp = $2, value = $3"
     local payload
     payload=$(cat <<JSON
 {
