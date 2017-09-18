@@ -40,7 +40,7 @@ function post_to_datadog {
         "tags": [
             "drain_version:$DRAIN_VERSION",
             "drain_type:$DRAIN_TYPE",
-            "job_name:$JOB_NAME"
+            "job_name:$JOB_NAME",
             "cycles:$CYCLES",
             "delay_us:$DELAY_US"
         ]
