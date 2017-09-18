@@ -62,7 +62,7 @@ function validate_hammer {
 function main {
     validate_hammer
 
-    checkpoint "Starting Hammer"
+    checkpoint "Starting Hammer. Cycles = $CYCLES, Delay = $DELAY_US"
 
     login
     establish_logs_stream
