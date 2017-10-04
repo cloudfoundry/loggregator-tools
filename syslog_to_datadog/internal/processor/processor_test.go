@@ -37,7 +37,7 @@ var _ = Describe("Processor", func() {
 		Expect(post.body).To(MatchJSON(`{
 			"series": [
 				{
-					"metric": "cpu",
+					"metric": "myhostname.cpu",
 					"points": [[0, 0.23]],
 					"type": "gauge",
 					"host": "myhostname"

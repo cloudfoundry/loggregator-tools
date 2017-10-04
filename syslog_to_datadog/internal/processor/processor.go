@@ -20,7 +20,7 @@ const (
 var (
 	template = `{
 		"series": [{
-			"metric": "%s",
+			"metric": "%s.%s",
 			"points": [[%d, %s]],
 			"type": "gauge",
 			"host": "%s"
@@ -101,6 +101,7 @@ func (p *Processor) postGauge(msg rfc5424.Message, sd rfc5424.StructuredData) er
 	body := strings.NewReader(
 		fmt.Sprintf(
 			template,
+			msg.Hostname,
 			name,
 			msg.Timestamp.Unix(),
 			value,
