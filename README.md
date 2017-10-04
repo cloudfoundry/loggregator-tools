@@ -14,6 +14,15 @@ The Syslog Drain is an example TCP server that accepts syslog messages
 [cf-syslog-drain-release](https://github.com/cloudfoundry/cf-syslog-drain-release).
 The Syslog drain can be configured to POST a counter.
 
+## [Syslog to Datadog](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/syslog_to_datadog)
+
+The Syslog to Datadog is an example HTTPS server that accepts syslog messages
+(RFC-5424) with metrics in the structured data. The metrics will be sent to
+datadog.
+
+The Syslog to Datadog application can be configured with `DATADOG_API_KEY` and
+`PORT` environment variables.
+
 ## [Log Spinner](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/logspinner)
 
 Log Spinner is a sample CF application that is written in go. It is compatible
