@@ -40,7 +40,8 @@ var _ = Describe("Processor", func() {
 					"metric": "myhostname.cpu",
 					"points": [[0, 0.23]],
 					"type": "gauge",
-					"host": "myhostname"
+					"host": "myhostname",
+					"tags": ["instance_id:4"]
 				}
 			]
 		}`))
@@ -105,6 +106,7 @@ func buildGaugeMessage() []byte {
 		Timestamp: time.Unix(0, 0),
 		Hostname:  "myhostname",
 		AppName:   "someapp",
+		ProcessID: "[4]",
 		StructuredData: []rfc5424.StructuredData{
 			{
 				ID: "gauge@47450",

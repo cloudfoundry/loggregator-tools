@@ -23,7 +23,8 @@ var (
 			"metric": "%s.%s",
 			"points": [[%d, %s]],
 			"type": "gauge",
-			"host": "%s"
+			"host": "%s",
+			"tags": ["instance_id:%s"]
 		}]
 	}`
 )
@@ -98,6 +99,10 @@ func (p *Processor) postGauge(msg rfc5424.Message, sd rfc5424.StructuredData) er
 			value = p.Value
 		}
 	}
+
+	instanceID := strings.TrimPrefix(msg.ProcessID, "[")
+	instanceID = strings.TrimSuffix(instanceID, "]")
+
 	body := strings.NewReader(
 		fmt.Sprintf(
 			template,
@@ -106,6 +111,7 @@ func (p *Processor) postGauge(msg rfc5424.Message, sd rfc5424.StructuredData) er
 			msg.Timestamp.Unix(),
 			value,
 			msg.Hostname,
+			instanceID,
 		),
 	)
 	resp, err := p.client.Post(p.apiURL.String(), "application/json", body)
