@@ -28,6 +28,11 @@ The Syslog to Datadog application can be configured with `DATADOG_API_KEY` and
 Log Spinner is a sample CF application that is written in go. It is compatible
 with the go-buildpack.
 
+## [Slow Consumer](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/slow_consumer)
+
+The Slow Consumer is a firehose nozzle that will induce the TrafficController
+to cut off the nozzle.
+
 ## [CF LogMon](https://github.com/cloudfoundry-incubator/cf-logmon)
 
 The CF LogMon performs a blacbox test for measuring message reliability when
