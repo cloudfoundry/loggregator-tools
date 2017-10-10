@@ -23,11 +23,24 @@ var _ = Describe("Server", func() {
 		resp, err := http.Post(fmt.Sprintf(
 			"http://%s", s.Addr()),
 			"text/plain",
-			strings.NewReader(`<30>1 2017-10-04T13:00:52.662629-06:00 myhostname someapp - - [gauge@47450 name="cpu" value="0.23" unit="percentage"]`),
+			strings.NewReader(`<30>1 2017-10-04T13:00:52.662629-06:00 myhostname someapp [4] - [gauge@47450 name="cpu" value="0.23" unit="percentage"]`),
 		)
 		Expect(err).ToNot(HaveOccurred())
 		Expect(resp.StatusCode).To(Equal(http.StatusAccepted))
 		Eventually(datadog.requests).Should(HaveLen(1))
+
+		req := datadog.requests()[0]
+		Expect(req.body).To(MatchJSON(`{
+			"series": [
+				{
+					"metric": "myhostname.cpu",
+					"points": [[1507143652, 0.23]],
+					"type": "gauge",
+					"host": "myhostname",
+					"tags": ["instance_id:4"]
+				}
+			]
+		}`))
 	})
 })
 
