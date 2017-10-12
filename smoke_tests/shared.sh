@@ -109,7 +109,7 @@ function syslog_drain_service_name {
 }
 
 function syslog_drain_service_url {
-    echo "$DRAIN_TYPE://$(app_url $(drain_app_name))/drain?drain-version=$DRAIN_VERSION"
+    echo "$DRAIN_TYPE://$(app_url $(drain_app_name))/drain"
 }
 
 function test_uuid {
