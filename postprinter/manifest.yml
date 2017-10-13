@@ -1,0 +1,8 @@
+---
+applications:
+- name: postprinter
+  buildpack: go_buildpack
+  memory: 64M
+  env:
+    GOPACKAGENAME: code.cloudfoundry.org/loggregator-tools/postprinter
+    GOVERSION: go1.8

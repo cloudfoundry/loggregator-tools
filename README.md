@@ -33,6 +33,10 @@ with the go-buildpack.
 The Slow Consumer is a firehose nozzle that will induce the TrafficController
 to cut off the nozzle.
 
+## [Post Printer](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/postprinter)
+
+The post printer is a CF application that prints every request to stderr.
+
 ## [CF LogMon](https://github.com/cloudfoundry-incubator/cf-logmon)
 
 The CF LogMon performs a blacbox test for measuring message reliability when
