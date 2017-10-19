@@ -23,6 +23,11 @@ datadog.
 The Syslog to Datadog application can be configured with `DATADOG_API_KEY` and
 `PORT` environment variables.
 
+## [Log Spinner](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/logspinner)
+
+Log Spinner is a sample CF application that is written in go. It is compatible
+with the go-buildpack.
+
 ## [JSON Spinner](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/jsonspinner)
 
 JSON Spinner is a sample CF application that is written in go. It is compatible
