@@ -104,12 +104,12 @@ function push_drain_app {
 function push_spinner_app {
     checkpoint "Pushing Spinner App"
 
-    pushd ../logspinner
-        if ! [ -e ./logspinner ]; then
+    pushd ../jsonspinner
+        if ! [ -e ./jsonspinner ]; then
             GOOS=linux go build
         fi
         for i in {1..5}; do
-            if cf push "$(drainspinner_app_name)" -c ./logspinner -b binary_buildpack -m 128M; then
+            if cf push "$(drainspinner_app_name)" -c ./jsonspinner -b binary_buildpack -m 128M; then
                 break
             fi
             sleep 5

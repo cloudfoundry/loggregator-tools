@@ -1,0 +1,8 @@
+---
+applications:
+- name: jsonspinner
+  buildpack: go_buildpack
+  memory: 64M
+  env:
+    GOPACKAGENAME: code.cloudfoundry.org/loggregator-tools/jsonspinner
+    GOVERSION: go1.8

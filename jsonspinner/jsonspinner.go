@@ -1,8 +1,7 @@
 // tool for generating log load
 
-// usage: curl <endpoint>?cycles=100&delay=1ms&text=time2
+// usage: curl <endpoint>?cycles=100&delay=1ms
 // delay is duration format (https://golang.org/pkg/time/#ParseDuration)
-// defaults: 10 cycles, 1 second, "LogSpinner Log Message"
 
 package main
 
