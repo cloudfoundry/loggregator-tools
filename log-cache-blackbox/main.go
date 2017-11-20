@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 
@@ -45,6 +47,11 @@ type TestResult struct {
 	AverageQueryTime float64         `json:"averageQueryTime"`
 }
 
+type ReliabilityTestResult struct {
+	LogsSent     int `json:"logs_sent"`
+	LogsReceived int `json:"logs_received"`
+}
+
 func main() {
 	var cfg Config
 	err := envstruct.Load(&cfg)
@@ -75,6 +82,90 @@ func handler(cfg Config) http.Handler {
 		}
 		defer atomic.StoreInt64(&testRunning, 0)
 
+		switch r.URL.Path {
+		case "/":
+			latencyHandler(cfg).ServeHTTP(w, r)
+		case "/reliability":
+			reliabilityHandler(cfg).ServeHTTP(w, r)
+		default:
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+	})
+}
+
+func reliabilityHandler(cfg Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		emitCount := 10000
+		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
+
+		for i := 0; i < emitCount; i++ {
+			log.Printf("%s %d", prefix, i)
+			time.Sleep(time.Millisecond)
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+
+		receivedCount := waitForEnvelopes(ctx, cfg, emitCount, prefix)
+
+		result := ReliabilityTestResult{
+			LogsSent:     emitCount,
+			LogsReceived: receivedCount,
+		}
+
+		resultData, err := json.Marshal(&result)
+		if err != nil {
+			log.Printf("failed to marshal test results: %s", err)
+			return
+		}
+
+		w.Write(resultData)
+	})
+}
+
+func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
+	url := fmt.Sprintf("%s/%s",
+		cfg.LogCacheAddr,
+		cfg.VCapApp.ApplicationID,
+	)
+
+	var receivedCount int
+	for {
+		select {
+		case <-ctx.Done():
+			return receivedCount
+		default:
+			resp, err := http.Get(url)
+			if err != nil {
+				log.Printf("error from log-cache: %s", err)
+				continue
+			}
+
+			if resp.StatusCode != http.StatusOK {
+				log.Printf("unxpected status code from log-cache: %d", resp.StatusCode)
+				continue
+			}
+
+			var data LogCacheData
+			err = json.NewDecoder(resp.Body).Decode(&data)
+			if err != nil {
+				log.Printf("failed to decode response body: %s", err)
+				continue
+			}
+
+			receivedCount = countMessages(prefix, data.Envelopes)
+			if receivedCount == emitCount {
+				return receivedCount
+			}
+		}
+	}
+
+	return receivedCount
+}
+
+func latencyHandler(cfg Config) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var queryTimes []time.Duration
 		for j := 0; j < 10; j++ {
 			expectedLog := fmt.Sprintf("Test log - %d", rand.Int63())
@@ -155,4 +246,23 @@ func lookForMsg(msg string, envelopes []Envelope) bool {
 	}
 
 	return false
+}
+
+func countMessages(prefix string, envelopes []Envelope) int {
+	var count int
+	for _, e := range envelopes {
+		if e.Log.Payload != "" {
+			payload, err := base64.StdEncoding.DecodeString(e.Log.Payload)
+			if err != nil {
+				log.Printf("failed to base64 decode log payload: %s", err)
+				continue
+			}
+
+			if strings.Contains(string(payload), prefix) {
+				count++
+			}
+		}
+	}
+
+	return count
 }
