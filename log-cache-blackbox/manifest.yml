@@ -1,0 +1,8 @@
+---
+applications:
+- name: log-cache-blackbox
+  buildpack: go_buildpack
+  memory: 64M
+  env:
+    GOPACKAGENAME: code.cloudfoundry.org/loggregator-tools/log-cache-blackbox
+    GOVERSION: go1.8
