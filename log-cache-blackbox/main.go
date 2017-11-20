@@ -40,9 +40,9 @@ type Log struct {
 }
 
 type TestResult struct {
-	Latency          time.Duration   `json:"latency"`
+	Latency          float64         `json:"latency"`
 	QueryTimes       []time.Duration `json:"queryTime"`
-	AverageQueryTime time.Duration   `json:"averageQueryTime"`
+	AverageQueryTime float64         `json:"averageQueryTime"`
 }
 
 func main() {
@@ -121,9 +121,9 @@ func handler(cfg Config) http.Handler {
 
 				// Success
 				testResults := TestResult{
-					Latency:          time.Since(logStartTime),
+					Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
 					QueryTimes:       queryTimes,
-					AverageQueryTime: time.Duration(avgQT),
+					AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
 				}
 
 				resultData, err := json.Marshal(testResults)
