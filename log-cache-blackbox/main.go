@@ -48,8 +48,8 @@ type TestResult struct {
 }
 
 type ReliabilityTestResult struct {
-	LogsSent     int `json:"logs_sent"`
-	LogsReceived int `json:"logs_received"`
+	LogsSent     int `json:"logsSent"`
+	LogsReceived int `json:"logsReceived"`
 }
 
 func main() {
