@@ -40,8 +40,9 @@ type Log struct {
 }
 
 type TestResult struct {
-	Latency    time.Duration   `json:"latency"`
-	QueryTimes []time.Duration `json:"queryTime"`
+	Latency          time.Duration   `json:"latency"`
+	QueryTimes       []time.Duration `json:"queryTime"`
+	AverageQueryTime time.Duration   `json:"averageQueryTime"`
 }
 
 func main() {
@@ -111,10 +112,18 @@ func handler(cfg Config) http.Handler {
 					continue
 				}
 
+				var totalQueryTimes time.Duration
+				for _, qt := range queryTimes {
+					totalQueryTimes += qt
+				}
+
+				avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
+
 				// Success
 				testResults := TestResult{
-					Latency:    time.Since(logStartTime),
-					QueryTimes: queryTimes,
+					Latency:          time.Since(logStartTime),
+					QueryTimes:       queryTimes,
+					AverageQueryTime: time.Duration(avgQT),
 				}
 
 				resultData, err := json.Marshal(testResults)
