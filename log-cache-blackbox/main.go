@@ -242,18 +242,18 @@ func latencyHandler(cfg Config) http.Handler {
 	})
 }
 
-func consumePages(tries int, start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) ([]time.Duration, bool) {
+func consumePages(pages int, start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) ([]time.Duration, bool) {
 	var queryDurations []time.Duration
 
-	for i := 0; i < tries; i++ {
-		queryDuration, last, err := consumeTimeRange(start, end, cfg, f)
+	for i := 0; i < pages; i++ {
+		queryDuration, last, count, err := consumeTimeRange(start, end, cfg, f)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
 		queryDurations = append(queryDurations, queryDuration)
-		if !last.IsZero() {
+		if !last.IsZero() && count > 0 {
 			start = last.Add(time.Nanosecond)
 			continue
 		}
@@ -264,7 +264,7 @@ func consumePages(tries int, start, end time.Time, cfg Config, f func([]Envelope
 	return queryDurations, false
 }
 
-func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) (time.Duration, time.Time, error) {
+func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
 	url := fmt.Sprintf("%s/%s?starttime=%d&endtime=%d",
 		cfg.LogCacheAddr,
 		cfg.VCapApp.ApplicationID,
@@ -275,26 +275,26 @@ func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool
 	queryStart := time.Now()
 	resp, err := http.Get(url)
 	if err != nil {
-		return 0, time.Time{}, err
+		return 0, time.Time{}, 0, err
 	}
 	queryDuration := time.Since(queryStart)
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, time.Time{}, fmt.Errorf("unxpected status code from log-cache: %d", resp.StatusCode)
+		return 0, time.Time{}, 0, fmt.Errorf("unxpected status code from log-cache: %d", resp.StatusCode)
 	}
 
 	var data LogCacheData
 	err = json.NewDecoder(resp.Body).Decode(&data)
 	if err != nil {
-		return 0, time.Time{}, fmt.Errorf("failed to decode response body: %s", err)
+		return 0, time.Time{}, 0, fmt.Errorf("failed to decode response body: %s", err)
 	}
 
 	found, last := f(data.Envelopes)
 	if !found {
-		return queryDuration, time.Unix(0, last), nil
+		return queryDuration, time.Unix(0, last), len(data.Envelopes), nil
 	}
 
-	return queryDuration, time.Time{}, nil
+	return queryDuration, time.Time{}, len(data.Envelopes), nil
 }
 
 func lookForMsg(msg string, envelopes []Envelope) (bool, int64) {
