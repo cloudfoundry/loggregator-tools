@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -34,7 +35,8 @@ type LogCacheData struct {
 }
 
 type Envelope struct {
-	Log Log `json:"log"`
+	Timestamp string `json:"timestamp"`
+	Log       Log    `json:"log"`
 }
 
 type Log struct {
@@ -42,9 +44,9 @@ type Log struct {
 }
 
 type TestResult struct {
-	Latency          float64         `json:"latency"`
-	QueryTimes       []time.Duration `json:"queryTime"`
-	AverageQueryTime float64         `json:"averageQueryTime"`
+	Latency          float64   `json:"latency"`
+	QueryTimes       []float64 `json:"queryTime"`
+	AverageQueryTime float64   `json:"averageQueryTime"`
 }
 
 type ReliabilityTestResult struct {
@@ -99,15 +101,31 @@ func reliabilityHandler(cfg Config) http.Handler {
 		emitCount := 10000
 		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
 
+		start := time.Now()
 		for i := 0; i < emitCount; i++ {
 			log.Printf("%s %d", prefix, i)
 			time.Sleep(time.Millisecond)
 		}
+		end := time.Now()
 
-		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
+		// Give the system time to get the envelopes
+		time.Sleep(10 * time.Second)
 
-		receivedCount := waitForEnvelopes(ctx, cfg, emitCount, prefix)
+		var receivedCount int
+		consumePages(emitCount*100, start, end, cfg, func(envelopes []Envelope) (bool, int64) {
+			if len(envelopes) == 0 {
+				return false, 0
+			}
+
+			lastTs, err := strconv.ParseInt(envelopes[len(envelopes)-1].Timestamp, 10, 64)
+			if err != nil {
+				log.Printf("Failed to parse timestamp: %s", err)
+				return false, 0
+			}
+
+			receivedCount += len(envelopes)
+			return receivedCount >= emitCount, lastTs
+		})
 
 		result := ReliabilityTestResult{
 			LogsSent:     emitCount,
@@ -172,66 +190,123 @@ func latencyHandler(cfg Config) http.Handler {
 			logStartTime := time.Now()
 			fmt.Println(expectedLog)
 
-			url := fmt.Sprintf("%s/%s",
-				cfg.LogCacheAddr,
-				cfg.VCapApp.ApplicationID,
-			)
-
 			for i := 0; i < 100; i++ {
-				queryStart := time.Now()
-				resp, err := http.Get(url)
-				if err != nil {
-					log.Printf("error from log-cache: %s", err)
-					continue
-				}
 
-				if resp.StatusCode != http.StatusOK {
-					log.Printf("unxpected status code from log-cache: %d", resp.StatusCode)
-					continue
-				}
-				queryTimes = append(queryTimes, time.Since(queryStart))
+				// Look at 110 pages. This equates to 11000 possible envelopes. The
+				// reliability test emits 10000 envelopes and could be clutter within the
+				// cache.
+				queryDurations, success := consumePages(
+					110,
+					logStartTime.Add(-7500*time.Millisecond),
+					logStartTime.Add(7500*time.Millisecond),
+					cfg,
+					func(envelopes []Envelope) (bool, int64) {
+						return lookForMsg(expectedLog, envelopes)
+					},
+				)
+				queryTimes = append(queryTimes, queryDurations...)
 
-				var data LogCacheData
-				err = json.NewDecoder(resp.Body).Decode(&data)
-				if err != nil {
-					log.Printf("failed to decode response body: %s", err)
-					continue
-				}
+				if success {
+					var queryTimesMs []float64
+					var totalQueryTimes time.Duration
+					for _, qt := range queryTimes {
+						totalQueryTimes += qt
+						queryTimesMs = append(queryTimesMs, float64(qt)/float64(time.Millisecond))
+					}
 
-				if !lookForMsg(expectedLog, data.Envelopes) {
-					log.Printf("unable to find msg: %s", expectedLog)
-					continue
-				}
+					avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
 
-				var totalQueryTimes time.Duration
-				for _, qt := range queryTimes {
-					totalQueryTimes += qt
-				}
+					// Success
+					testResults := TestResult{
+						Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
+						QueryTimes:       queryTimesMs,
+						AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
+					}
 
-				avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
+					resultData, err := json.Marshal(testResults)
+					if err != nil {
+						log.Printf("failed to marshal test results: %s", err)
+						w.WriteHeader(http.StatusInternalServerError)
+						return
+					}
 
-				// Success
-				testResults := TestResult{
-					Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
-					QueryTimes:       queryTimes,
-					AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
-				}
-
-				resultData, err := json.Marshal(testResults)
-				if err != nil {
-					log.Printf("failed to marshal test results: %s", err)
+					w.Write(resultData)
 					return
 				}
-
-				w.Write(resultData)
-				return
 			}
 		}
+
+		// Fail...
+		log.Println("Never found the log")
+		w.WriteHeader(http.StatusInternalServerError)
 	})
 }
 
-func lookForMsg(msg string, envelopes []Envelope) bool {
+func consumePages(tries int, start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) ([]time.Duration, bool) {
+	var queryDurations []time.Duration
+
+	for i := 0; i < tries; i++ {
+		queryDuration, last, err := consumeTimeRange(start, end, cfg, f)
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		queryDurations = append(queryDurations, queryDuration)
+		if !last.IsZero() {
+			start = last.Add(time.Nanosecond)
+			continue
+		}
+
+		return queryDurations, true
+	}
+
+	return queryDurations, false
+}
+
+func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) (time.Duration, time.Time, error) {
+	url := fmt.Sprintf("%s/%s?starttime=%d&endtime=%d",
+		cfg.LogCacheAddr,
+		cfg.VCapApp.ApplicationID,
+		start.UnixNano(),
+		end.UnixNano(),
+	)
+
+	queryStart := time.Now()
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, time.Time{}, err
+	}
+	queryDuration := time.Since(queryStart)
+
+	if resp.StatusCode != http.StatusOK {
+		return 0, time.Time{}, fmt.Errorf("unxpected status code from log-cache: %d", resp.StatusCode)
+	}
+
+	var data LogCacheData
+	err = json.NewDecoder(resp.Body).Decode(&data)
+	if err != nil {
+		return 0, time.Time{}, fmt.Errorf("failed to decode response body: %s", err)
+	}
+
+	found, last := f(data.Envelopes)
+	if !found {
+		return queryDuration, time.Unix(0, last), nil
+	}
+
+	return queryDuration, time.Time{}, nil
+}
+
+func lookForMsg(msg string, envelopes []Envelope) (bool, int64) {
+	var last int64
 	for _, e := range envelopes {
+		var err error
+		last, err = strconv.ParseInt(e.Timestamp, 10, 64)
+		if err != nil {
+			log.Printf("failed to parse timestamp: %s", err)
+			continue
+		}
+
 		if e.Log.Payload != "" {
 			payload, err := base64.StdEncoding.DecodeString(e.Log.Payload)
 			if err != nil {
@@ -240,12 +315,12 @@ func lookForMsg(msg string, envelopes []Envelope) bool {
 			}
 
 			if string(payload) == msg {
-				return true
+				return true, last
 			}
 		}
 	}
 
-	return false
+	return false, last
 }
 
 func countMessages(prefix string, envelopes []Envelope) int {
