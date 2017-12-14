@@ -31,7 +31,9 @@ func (v *VCapApp) UnmarshalEnv(jsonData string) error {
 }
 
 type LogCacheData struct {
-	Envelopes []Envelope `json:"envelopes"`
+	Envelopes struct {
+		Batch []Envelope
+	}
 }
 
 type Envelope struct {
@@ -143,7 +145,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 }
 
 func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
-	url := fmt.Sprintf("%s/%s",
+	url := fmt.Sprintf("%s/v1/read/%s",
 		cfg.LogCacheAddr,
 		cfg.VCapApp.ApplicationID,
 	)
@@ -172,7 +174,7 @@ func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix str
 				continue
 			}
 
-			receivedCount = countMessages(prefix, data.Envelopes)
+			receivedCount = countMessages(prefix, data.Envelopes.Batch)
 			if receivedCount == emitCount {
 				return receivedCount
 			}
@@ -265,7 +267,7 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]Envelope
 }
 
 func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
-	url := fmt.Sprintf("%s/%s?starttime=%d&endtime=%d",
+	url := fmt.Sprintf("%s/v1/read/%s?start_time=%d&end_time=%d",
 		cfg.LogCacheAddr,
 		cfg.VCapApp.ApplicationID,
 		start.UnixNano(),
@@ -289,12 +291,12 @@ func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool
 		return 0, time.Time{}, 0, fmt.Errorf("failed to decode response body: %s", err)
 	}
 
-	found, last := f(data.Envelopes)
+	found, last := f(data.Envelopes.Batch)
 	if !found {
-		return queryDuration, time.Unix(0, last), len(data.Envelopes), nil
+		return queryDuration, time.Unix(0, last), len(data.Envelopes.Batch), nil
 	}
 
-	return queryDuration, time.Time{}, len(data.Envelopes), nil
+	return queryDuration, time.Time{}, len(data.Envelopes.Batch), nil
 }
 
 func lookForMsg(msg string, envelopes []Envelope) (bool, int64) {
