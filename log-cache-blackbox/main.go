@@ -99,14 +99,15 @@ func reliabilityHandler(cfg Config) http.Handler {
 		time.Sleep(10 * time.Second)
 
 		var receivedCount int
-		consumePages(emitCount*100, start, end, cfg, func(envelopes []*loggregator_v2.Envelope) (bool, int64) {
-			if len(envelopes) == 0 {
-				return false, 0
-			}
-
+		client := logcache.NewClient(cfg.LogCacheAddr)
+		logcache.Walk(cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
 			receivedCount += len(envelopes)
-			return receivedCount >= emitCount, envelopes[len(envelopes)-1].Timestamp
-		})
+			return receivedCount < emitCount
+		},
+			client.Read,
+			logcache.WithWalkStartTime(start),
+			logcache.WithWalkEndTime(end),
+		)
 
 		result := ReliabilityTestResult{
 			LogsSent:     emitCount,
