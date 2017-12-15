@@ -2,18 +2,18 @@ package main
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
+	logcache "code.cloudfoundry.org/go-log-cache"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
 type Config struct {
@@ -28,21 +28,6 @@ type VCapApp struct {
 
 func (v *VCapApp) UnmarshalEnv(jsonData string) error {
 	return json.Unmarshal([]byte(jsonData), &v)
-}
-
-type LogCacheData struct {
-	Envelopes struct {
-		Batch []Envelope
-	}
-}
-
-type Envelope struct {
-	Timestamp string `json:"timestamp"`
-	Log       Log    `json:"log"`
-}
-
-type Log struct {
-	Payload string `json:"payload"`
 }
 
 type TestResult struct {
@@ -114,19 +99,13 @@ func reliabilityHandler(cfg Config) http.Handler {
 		time.Sleep(10 * time.Second)
 
 		var receivedCount int
-		consumePages(emitCount*100, start, end, cfg, func(envelopes []Envelope) (bool, int64) {
+		consumePages(emitCount*100, start, end, cfg, func(envelopes []*loggregator_v2.Envelope) (bool, int64) {
 			if len(envelopes) == 0 {
 				return false, 0
 			}
 
-			lastTs, err := strconv.ParseInt(envelopes[len(envelopes)-1].Timestamp, 10, 64)
-			if err != nil {
-				log.Printf("Failed to parse timestamp: %s", err)
-				return false, 0
-			}
-
 			receivedCount += len(envelopes)
-			return receivedCount >= emitCount, lastTs
+			return receivedCount >= emitCount, envelopes[len(envelopes)-1].Timestamp
 		})
 
 		result := ReliabilityTestResult{
@@ -145,10 +124,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 }
 
 func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
-	url := fmt.Sprintf("%s/v1/read/%s",
-		cfg.LogCacheAddr,
-		cfg.VCapApp.ApplicationID,
-	)
+	client := logcache.NewClient(cfg.LogCacheAddr)
 
 	var receivedCount int
 	for {
@@ -156,25 +132,13 @@ func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix str
 		case <-ctx.Done():
 			return receivedCount
 		default:
-			resp, err := http.Get(url)
+			data, err := client.Read(cfg.VCapApp.ApplicationID, time.Unix(0, 0))
 			if err != nil {
-				log.Printf("error from log-cache: %s", err)
+				log.Printf("error while reading: %s", err)
 				continue
 			}
 
-			if resp.StatusCode != http.StatusOK {
-				log.Printf("unxpected status code from log-cache: %d", resp.StatusCode)
-				continue
-			}
-
-			var data LogCacheData
-			err = json.NewDecoder(resp.Body).Decode(&data)
-			if err != nil {
-				log.Printf("failed to decode response body: %s", err)
-				continue
-			}
-
-			receivedCount = countMessages(prefix, data.Envelopes.Batch)
+			receivedCount = countMessages(prefix, data)
 			if receivedCount == emitCount {
 				return receivedCount
 			}
@@ -202,7 +166,7 @@ func latencyHandler(cfg Config) http.Handler {
 					logStartTime.Add(-7500*time.Millisecond),
 					logStartTime.Add(7500*time.Millisecond),
 					cfg,
-					func(envelopes []Envelope) (bool, int64) {
+					func(envelopes []*loggregator_v2.Envelope) (bool, int64) {
 						return lookForMsg(expectedLog, envelopes)
 					},
 				)
@@ -244,7 +208,7 @@ func latencyHandler(cfg Config) http.Handler {
 	})
 }
 
-func consumePages(pages int, start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) ([]time.Duration, bool) {
+func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) ([]time.Duration, bool) {
 	var queryDurations []time.Duration
 
 	for i := 0; i < pages; i++ {
@@ -266,78 +230,46 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]Envelope
 	return queryDurations, false
 }
 
-func consumeTimeRange(start, end time.Time, cfg Config, f func([]Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
-	url := fmt.Sprintf("%s/v1/read/%s?start_time=%d&end_time=%d",
-		cfg.LogCacheAddr,
-		cfg.VCapApp.ApplicationID,
-		start.UnixNano(),
-		end.UnixNano(),
-	)
+func consumeTimeRange(start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
+	client := logcache.NewClient(cfg.LogCacheAddr)
 
 	queryStart := time.Now()
-	resp, err := http.Get(url)
+	data, err := client.Read(
+		cfg.VCapApp.ApplicationID,
+		start,
+		logcache.WithEndTime(end),
+	)
+
 	if err != nil {
 		return 0, time.Time{}, 0, err
 	}
 	queryDuration := time.Since(queryStart)
 
-	if resp.StatusCode != http.StatusOK {
-		return 0, time.Time{}, 0, fmt.Errorf("unxpected status code from log-cache: %d", resp.StatusCode)
-	}
-
-	var data LogCacheData
-	err = json.NewDecoder(resp.Body).Decode(&data)
-	if err != nil {
-		return 0, time.Time{}, 0, fmt.Errorf("failed to decode response body: %s", err)
-	}
-
-	found, last := f(data.Envelopes.Batch)
+	found, last := f(data)
 	if !found {
-		return queryDuration, time.Unix(0, last), len(data.Envelopes.Batch), nil
+		return queryDuration, time.Unix(0, last), len(data), nil
 	}
 
-	return queryDuration, time.Time{}, len(data.Envelopes.Batch), nil
+	return queryDuration, time.Time{}, len(data), nil
 }
 
-func lookForMsg(msg string, envelopes []Envelope) (bool, int64) {
+func lookForMsg(msg string, envelopes []*loggregator_v2.Envelope) (bool, int64) {
 	var last int64
 	for _, e := range envelopes {
-		var err error
-		last, err = strconv.ParseInt(e.Timestamp, 10, 64)
-		if err != nil {
-			log.Printf("failed to parse timestamp: %s", err)
-			continue
-		}
-
-		if e.Log.Payload != "" {
-			payload, err := base64.StdEncoding.DecodeString(e.Log.Payload)
-			if err != nil {
-				log.Printf("failed to base64 decode log payload: %s", err)
-				continue
-			}
-
-			if string(payload) == msg {
-				return true, last
-			}
+		last = e.Timestamp
+		if string(e.GetLog().GetPayload()) == msg {
+			return true, last
 		}
 	}
 
 	return false, last
 }
 
-func countMessages(prefix string, envelopes []Envelope) int {
+func countMessages(prefix string, envelopes []*loggregator_v2.Envelope) int {
 	var count int
 	for _, e := range envelopes {
-		if e.Log.Payload != "" {
-			payload, err := base64.StdEncoding.DecodeString(e.Log.Payload)
-			if err != nil {
-				log.Printf("failed to base64 decode log payload: %s", err)
-				continue
-			}
-
-			if strings.Contains(string(payload), prefix) {
-				count++
-			}
+		if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
+			count++
 		}
 	}
 
