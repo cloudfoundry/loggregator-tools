@@ -27,7 +27,7 @@ func main() {
 
 	logcache.Walk(
 		cfg.SourceID,
-		buildDataDogWriter(ddc, cfg.Prefix, cfg.Origin),
+		buildDataDogWriter(ddc, cfg.Prefix, cfg.Host),
 		llc.Read,
 		logcache.WithWalkEnvelopeType(rpc.EnvelopeTypes_GAUGE),
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(time.Second)),
@@ -83,7 +83,7 @@ type Config struct {
 	LogCacheAddr  string `env:"LOG_CACHE_ADDR,required"`
 	SourceID      string `env:"SOURCE_ID,required"`
 	DataDogAPIKey string `env:"DATA_DOG_API_KEY,required"`
-	Origin        string `env:"ORIGIN,required"`
+	Host          string `env:"HOST,required"`
 	Prefix        string `env:"METRIC_PREFIX"`
 }
 
