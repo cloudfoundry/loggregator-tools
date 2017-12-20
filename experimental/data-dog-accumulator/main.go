@@ -10,7 +10,6 @@ import (
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
-	rpc "code.cloudfoundry.org/go-log-cache/rpc/logcache"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
@@ -29,23 +28,42 @@ func main() {
 		cfg.SourceID,
 		buildDataDogWriter(ddc, cfg.Prefix, cfg.Host),
 		llc.Read,
-		logcache.WithWalkEnvelopeType(rpc.EnvelopeTypes_GAUGE),
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(time.Second)),
 		logcache.WithWalkLogger(log.New(os.Stderr, "", 0)),
 	)
 }
 
-func buildDataDogWriter(ddc *datadog.Client, prefix, origin string) func([]*loggregator_v2.Envelope) bool {
+func buildDataDogWriter(ddc *datadog.Client, prefix, host string) func([]*loggregator_v2.Envelope) bool {
 	return func(es []*loggregator_v2.Envelope) bool {
 		for _, e := range es {
-			if e.GetGauge() == nil {
-				continue
-			}
+			switch e.Message.(type) {
+			case *loggregator_v2.Envelope_Gauge:
+				for name, value := range e.GetGauge().Metrics {
+					// We plan to take the address of this and therefore can not
+					// use name given to us via range.
+					name := name
+					if prefix != "" {
+						name = fmt.Sprintf("%s.%s", prefix, name)
+					}
 
-			for name, value := range e.GetGauge().Metrics {
-				// We plan to take the address of this and therefore can not
-				// use name given to us via range.
-				name := name
+					mType := "gauge"
+					metric := datadog.Metric{
+						Metric: &name,
+						Points: toDataPoint(e.Timestamp, value.GetValue()),
+						Type:   &mType,
+						Host:   &host,
+					}
+
+					log.Printf("Posting %s: %v", name, value.GetValue())
+
+					err := ddc.PostMetrics([]datadog.Metric{metric})
+
+					if err != nil {
+						log.Printf("failed to write metrics to DataDog: %s", err)
+					}
+				}
+			case *loggregator_v2.Envelope_Counter:
+				name := e.GetCounter().GetName()
 				if prefix != "" {
 					name = fmt.Sprintf("%s.%s", prefix, name)
 				}
@@ -53,18 +71,20 @@ func buildDataDogWriter(ddc *datadog.Client, prefix, origin string) func([]*logg
 				mType := "gauge"
 				metric := datadog.Metric{
 					Metric: &name,
-					Points: toDataPoint(e.Timestamp, value.GetValue()),
+					Points: toDataPoint(e.Timestamp, float64(e.GetCounter().GetTotal())),
 					Type:   &mType,
-					Host:   &origin,
+					Host:   &host,
 				}
 
-				log.Printf("Posting %s: %v", name, value.GetValue())
+				log.Printf("Posting %s: %v", name, e.GetCounter().GetTotal())
 
 				err := ddc.PostMetrics([]datadog.Metric{metric})
 
 				if err != nil {
 					log.Printf("failed to write metrics to DataDog: %s", err)
 				}
+			default:
+				continue
 			}
 		}
 		return true
