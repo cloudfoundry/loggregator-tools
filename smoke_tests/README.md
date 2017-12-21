@@ -10,7 +10,13 @@ Required environment variables
 - `DRAIN_URLS` a string with URLs separated by spaces
 - `DATADOG_API_KEY`
 - `DRAIN_VERSION`
+- `SINK_DEPLOY`
 - `NUM_APPS`
+
+Required if `SINK_DEPLOY` is `standalone`,
+- `EXTERNAL_DRAIN_HOST`
+- `EXTERNAL_DRAIN_PORT`
+- `EXTERNAL_COUNTER_PORT`
 
 Usage:
 
