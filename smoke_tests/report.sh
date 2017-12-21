@@ -57,8 +57,8 @@ done
 
 function validate_report {
     validate_variables JOB_NAME CYCLES DELAY_US DATADOG_API_KEY DRAIN_TYPE \
-        DRAIN_VERSION CF_SYSTEM_DOMAIN CF_USERNAME CF_PASSWORD CF_SPACE \
-        CF_ORG CF_APP_DOMAIN
+        DRAIN_VERSION SINK_DEPLOY CF_SYSTEM_DOMAIN CF_USERNAME CF_PASSWORD \
+        CF_SPACE CF_ORG CF_APP_DOMAIN
 }
 
 function main {
@@ -76,7 +76,7 @@ function main {
     fi
 
     local drain_msg_count
-    drain_msg_count=$(curl -s "$(app_url "$(counter_app_name)")/get/$(test_uuid)")
+    drain_msg_count=$(curl -s "$(counter_endpoint)")
 
     currenttime=$(date +%s)
 

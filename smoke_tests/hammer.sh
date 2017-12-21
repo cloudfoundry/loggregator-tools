@@ -43,7 +43,7 @@ function hammer {
 function block_until_count_equals_cycles {
     source ./shared.sh
     while true; do
-        local count=$(curl -s "$(app_url "$(counter_app_name)")/get/$(test_uuid)")
+        local count=$(curl -s "$(counter_endpoint)")
         if [ "${count:-0}" -ge "$CYCLES" ]; then
             success "received all messages with count $count"
             break

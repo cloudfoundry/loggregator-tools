@@ -30,6 +30,23 @@ function validate_variables {
                     return 1
                 fi
                 ;;
+            SINK_DEPLOY)
+                if [ "$value" = "standalone"  ]; then
+                    for v in "EXTERNAL_DRAIN_HOST EXTERNAL_DRAIN_PORT EXTERNAL_COUNTER_PORT"; do
+                        if [ "$v" = "" ]; then
+                            error "$v must be set for a standalone $var"
+                            return 1
+                        fi
+                    done
+                elif [ "$value" != "cf" ] && [ "$value" != "standalone"  ]; then
+                    error "$var must be either \"cf\" or \"standalone\""
+                    return 1
+                elif [ "$value" = "standalone" ] && [ "$DRAIN_TYPE" = "https" ]; then
+                    error "$var as standalone is not supported for HTTPS
+                    drains"
+                    return 2
+                fi
+                ;;
             CYCLES)
                 if [ ! "$value" -gt 0 ]; then
                     error "$var must be a positive number"
@@ -69,6 +86,10 @@ function success {
     echo -e "\e[92m$1\e[0m"
 }
 
+function is_standalone {
+    [ "$SINK_DEPLOY" = "standalone" ]
+}
+
 function app_url {
     local app_name="$1"
 
@@ -92,6 +113,22 @@ function app_url {
     fi
 }
 
+function get_prime_count {
+    if $(is_standalone); then
+        echo "$EXTERNAL_DRAIN_HOST:$EXTERNAL_COUNTER_PORT/get-prime/$(test_uuid)" && return
+    fi
+
+    echo "$(app_url "$(counter_app_name)")/get-prime/$(test_uuid)"
+}
+
+function counter_endpoint {
+    if $(is_standalone); then
+        echo "$EXTERNAL_DRAIN_HOST:$EXTERNAL_COUNTER_PORT/get/$(test_uuid)" && return
+    fi
+
+    echo "$(app_url "$(counter_app_name)")/get/$(test_uuid)"
+}
+
 function drain_app_name {
     echo "ss-smoke-drain-$JOB_NAME"
 }
@@ -109,6 +146,10 @@ function syslog_drain_service_name {
 }
 
 function syslog_drain_service_url {
+    if $(is_standalone); then
+        echo "$DRAIN_TYPE://$EXTERNAL_DRAIN_HOST:$EXTERNAL_DRAIN_PORT" && return
+    fi
+
     echo "$DRAIN_TYPE://$(app_url $(drain_app_name))/drain"
 }
 

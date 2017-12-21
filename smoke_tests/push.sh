@@ -9,6 +9,7 @@
 # CF_SPACE: cf space for running test
 # CF_ORG: cf org for running test
 # CF_APP_DOMAIN: tcp or https app domain based on DRAIN_TYPE
+# SINK_DEPLOY: syslogs drain into a cf pushed app or our standalone TCP Server
 
 set -eu
 
@@ -157,7 +158,7 @@ function block_until_count {
     # wait for first prime message and exit
     source ./shared.sh
     while true; do
-        local count=$(curl -s "$(app_url "$(counter_app_name)")/get-prime/$(test_uuid)")
+        local count=$(curl -s "$(get_prime_count)")
         if [ "${count:-0}" -gt 0 ]; then
             success "received primer message, binding has been setup"
             break
@@ -170,7 +171,7 @@ function block_until_count {
 
 function validate_push {
     validate_variables JOB_NAME DRAIN_TYPE DRAIN_VERSION CF_SYSTEM_DOMAIN \
-        CF_USERNAME CF_PASSWORD CF_SPACE CF_ORG CF_APP_DOMAIN
+        SINK_DEPLOY CF_USERNAME CF_PASSWORD CF_SPACE CF_ORG CF_APP_DOMAIN
 }
 
 function main {
@@ -179,9 +180,11 @@ function main {
     checkpoint "Starting Push"
 
     login
+    if $(! is_standalone); then
+        ensure_counter_app
+        ensure_drain_app
+    fi
 
-    ensure_counter_app
-    ensure_drain_app
     ensure_spinner_app
     ensure_drain_service
     bind_service

@@ -13,8 +13,8 @@ set -eu
 source ./shared.sh
 
 function validate_teardown {
-    validate_variables JOB_NAME DRAIN_VERSION CF_SYSTEM_DOMAIN CF_USERNAME \
-        CF_PASSWORD CF_SPACE CF_ORG
+    validate_variables JOB_NAME DRAIN_VERSION SINK_DEPLOY CF_SYSTEM_DOMAIN \
+        CF_USERNAME CF_PASSWORD CF_SPACE CF_ORG
 }
 
 function main {
@@ -23,9 +23,12 @@ function main {
     checkpoint "Tearing Down Apps and Services"
 
     login
+
     cf delete "$(drainspinner_app_name)" -r -f
-    cf delete "$(drain_app_name)" -r -f
-    cf delete "$(counter_app_name)" -r -f
+    if $(! is_standalone); then
+        cf delete "$(drain_app_name)" -r -f
+        cf delete "$(counter_app_name)" -r -f
+    fi
     cf delete-service "$(syslog_drain_service_name)" -f
 }
 main
