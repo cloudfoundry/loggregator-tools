@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -25,6 +26,7 @@ func main() {
 	ddc := datadog.NewClient(cfg.DataDogAPIKey, "")
 
 	logcache.Walk(
+		context.Background(),
 		cfg.SourceID,
 		buildDataDogWriter(ddc, cfg.Prefix, cfg.Host),
 		llc.Read,
