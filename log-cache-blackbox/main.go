@@ -100,7 +100,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 
 		var receivedCount int
 		client := logcache.NewClient(cfg.LogCacheAddr)
-		logcache.Walk(cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
+		logcache.Walk(context.Background(), cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
 			receivedCount += len(envelopes)
 			return receivedCount < emitCount
 		},
@@ -134,7 +134,7 @@ func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix str
 		case <-ctx.Done():
 			return receivedCount
 		default:
-			data, err := client.Read(cfg.VCapApp.ApplicationID, time.Unix(0, 0))
+			data, err := client.Read(context.Background(), cfg.VCapApp.ApplicationID, time.Unix(0, 0))
 			if err != nil {
 				log.Printf("error while reading: %s", err)
 				continue
@@ -237,6 +237,7 @@ func consumeTimeRange(start, end time.Time, cfg Config, f func([]*loggregator_v2
 
 	queryStart := time.Now()
 	data, err := client.Read(
+		context.Background(),
 		cfg.VCapApp.ApplicationID,
 		start,
 		logcache.WithEndTime(end),
