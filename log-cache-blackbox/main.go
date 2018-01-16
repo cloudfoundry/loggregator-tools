@@ -217,7 +217,7 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggreg
 		queryDuration, last, count, err := consumeTimeRange(start, end, cfg, f)
 		if err != nil {
 			log.Println(err)
-			continue
+			return nil, false
 		}
 
 		queryDurations = append(queryDurations, queryDuration)
