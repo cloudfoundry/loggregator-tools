@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -25,6 +26,8 @@ type Config struct {
 	UAAAddr         string `env:"UAA_ADDR,          required"`
 	UAAClient       string `env:"UAA_CLIENT,        required"`
 	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
+
+	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION"`
 }
 
 type VCapApp struct {
@@ -103,12 +106,21 @@ func reliabilityHandler(cfg Config) http.Handler {
 		// Give the system time to get the envelopes
 		time.Sleep(10 * time.Second)
 
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+		}
+
 		client := logcache.NewClient(cfg.LogCacheAddr,
 			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
 				cfg.UAAClient,
 				cfg.UAAClientSecret,
-			)),
+				logcache.WithOauth2HTTPClient(
+					&http.Client{
+						Transport: tr,
+						Timeout:   5 * time.Second,
+					},
+				))),
 		)
 
 		var receivedCount int

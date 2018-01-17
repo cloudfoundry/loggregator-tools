@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -22,12 +24,21 @@ func main() {
 
 	log.Printf("Scraping data for %s", cfg.SourceID)
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+	}
+
 	llc := logcache.NewClient(cfg.LogCacheAddr,
 		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 			cfg.UAAAddr,
 			cfg.UAAClient,
 			cfg.UAAClientSecret,
-		)),
+			logcache.WithOauth2HTTPClient(
+				&http.Client{
+					Transport: tr,
+					Timeout:   5 * time.Second,
+				},
+			))),
 	)
 
 	ddc := datadog.NewClient(cfg.DataDogAPIKey, "")
@@ -118,6 +129,8 @@ type Config struct {
 	UAAAddr         string `env:"UAA_ADDR,          required"`
 	UAAClient       string `env:"UAA_CLIENT,        required"`
 	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
+
+	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION"`
 }
 
 func loadConfig() *Config {
