@@ -22,7 +22,14 @@ func main() {
 
 	log.Printf("Scraping data for %s", cfg.SourceID)
 
-	llc := logcache.NewClient(cfg.LogCacheAddr)
+	llc := logcache.NewClient(cfg.LogCacheAddr,
+		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+			cfg.UAAAddr,
+			cfg.UAAClient,
+			cfg.UAAClientSecret,
+		)),
+	)
+
 	ddc := datadog.NewClient(cfg.DataDogAPIKey, "")
 
 	logcache.Walk(
@@ -107,6 +114,10 @@ type Config struct {
 	DataDogAPIKey string `env:"DATA_DOG_API_KEY,required"`
 	Host          string `env:"HOST,required"`
 	Prefix        string `env:"METRIC_PREFIX"`
+
+	UAAAddr         string `env:"UAA_ADDR,          required"`
+	UAAClient       string `env:"UAA_CLIENT,        required"`
+	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
 }
 
 func loadConfig() *Config {
