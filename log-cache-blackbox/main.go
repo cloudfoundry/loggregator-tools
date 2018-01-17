@@ -58,7 +58,7 @@ func main() {
 
 	err = envstruct.WriteReport(&cfg)
 	if err != nil {
-		log.Fatalf("failed to load config: %s", err)
+		log.Fatalf("failed to write config report: %s", err)
 	}
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), handler(cfg)))
@@ -150,12 +150,21 @@ func reliabilityHandler(cfg Config) http.Handler {
 }
 
 func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+	}
+
 	client := logcache.NewClient(cfg.LogCacheAddr,
 		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 			cfg.UAAAddr,
 			cfg.UAAClient,
 			cfg.UAAClientSecret,
-		)),
+			logcache.WithOauth2HTTPClient(
+				&http.Client{
+					Transport: tr,
+					Timeout:   5 * time.Second,
+				},
+			))),
 	)
 
 	var receivedCount int
@@ -263,12 +272,21 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggreg
 }
 
 func consumeTimeRange(start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+	}
+
 	client := logcache.NewClient(cfg.LogCacheAddr,
 		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 			cfg.UAAAddr,
 			cfg.UAAClient,
 			cfg.UAAClientSecret,
-		)),
+			logcache.WithOauth2HTTPClient(
+				&http.Client{
+					Transport: tr,
+					Timeout:   5 * time.Second,
+				},
+			))),
 	)
 
 	queryStart := time.Now()
