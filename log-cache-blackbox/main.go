@@ -17,9 +17,14 @@ import (
 )
 
 type Config struct {
-	Port         int     `env:"PORT,             required"`
-	LogCacheAddr string  `env:"LOG_CACHE_ADDR,   required"`
-	VCapApp      VCapApp `env:"VCAP_APPLICATION, required"`
+	LogCacheAddr string `env:"LOG_CACHE_ADDR,   required"`
+
+	Port    int     `env:"PORT,             required"`
+	VCapApp VCapApp `env:"VCAP_APPLICATION, required"`
+
+	UAAAddr         string `env:"UAA_ADDR,          required"`
+	UAAClient       string `env:"UAA_CLIENT,        required"`
+	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
 }
 
 type VCapApp struct {
@@ -98,8 +103,15 @@ func reliabilityHandler(cfg Config) http.Handler {
 		// Give the system time to get the envelopes
 		time.Sleep(10 * time.Second)
 
+		client := logcache.NewClient(cfg.LogCacheAddr,
+			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+				cfg.UAAAddr,
+				cfg.UAAClient,
+				cfg.UAAClientSecret,
+			)),
+		)
+
 		var receivedCount int
-		client := logcache.NewClient(cfg.LogCacheAddr)
 		logcache.Walk(context.Background(), cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
 			receivedCount += len(envelopes)
 			return receivedCount < emitCount
@@ -126,7 +138,13 @@ func reliabilityHandler(cfg Config) http.Handler {
 }
 
 func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
-	client := logcache.NewClient(cfg.LogCacheAddr)
+	client := logcache.NewClient(cfg.LogCacheAddr,
+		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+			cfg.UAAAddr,
+			cfg.UAAClient,
+			cfg.UAAClientSecret,
+		)),
+	)
 
 	var receivedCount int
 	for {
@@ -233,7 +251,13 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggreg
 }
 
 func consumeTimeRange(start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
-	client := logcache.NewClient(cfg.LogCacheAddr)
+	client := logcache.NewClient(cfg.LogCacheAddr,
+		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+			cfg.UAAAddr,
+			cfg.UAAClient,
+			cfg.UAAClientSecret,
+		)),
+	)
 
 	queryStart := time.Now()
 	data, err := client.Read(
