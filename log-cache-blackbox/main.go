@@ -131,7 +131,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 			client.Read,
 			logcache.WithWalkStartTime(start),
 			logcache.WithWalkEndTime(end),
-			logcache.WithWalkBackoff(logcache.AlwaysDoneBackoff{}),
+			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
 		)
 
 		result := ReliabilityTestResult{
