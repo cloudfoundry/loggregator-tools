@@ -50,6 +50,7 @@ func main() {
 		llc.Read,
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(time.Second)),
 		logcache.WithWalkLogger(log.New(os.Stderr, "", 0)),
+		logcache.WithWalkStartTime(time.Now().Add(-10*time.Minute)),
 	)
 }
 
