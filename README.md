@@ -38,6 +38,11 @@ with the go-buildpack.
 JSON Spinner is a sample CF application that is written in go. It is compatible
 with the go-buildpack. It is used by the cf-syslog-drain black box tests.
 
+## [Request Spinner](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/request-spinner)
+
+Request Spinner reads from Log Cache for load testing purposes. The request
+can be configured to hit specific source IDs, at a given cycle and delay.
+
 ## [Slow Consumer](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/slow_consumer)
 
 The Slow Consumer is a firehose nozzle that will induce the TrafficController
