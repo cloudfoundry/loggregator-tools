@@ -28,7 +28,7 @@ var _ = Describe("Starter", func() {
 	})
 
 	It("reads from the given source ID", func() {
-		req := httptest.NewRequest("POST", "/v1/start?source_id=some-id", nil)
+		req := httptest.NewRequest("POST", "/v1/start/?source_id=some-id", nil)
 		s.ServeHTTP(recorder, req)
 
 		Expect(recorder.Code).To(Equal(http.StatusOK))

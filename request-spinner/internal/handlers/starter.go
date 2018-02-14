@@ -35,7 +35,7 @@ func NewStarter(r Reader) Starter {
 
 // Starter implements http.Handler
 func (s Starter) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/v1/start" {
+	if r.URL.Path != "/v1/start" && r.URL.Path != "/v1/start/" {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
