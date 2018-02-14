@@ -23,23 +23,27 @@ func main() {
 		cfg.UAAAddr,
 		cfg.UAAClient,
 		cfg.UAAClientSecret,
-		logcache.WithOauth2HTTPClient(httpClient))
+		logcache.WithOauth2HTTPClient(httpClient),
+	)
 
 	logCacheClient := logcache.NewClient(
 		cfg.LogCacheAddr,
-		logcache.WithHTTPClient(oauthHttpClient))
+		logcache.WithHTTPClient(oauthHttpClient),
+	)
 
 	siegeHandler := handlers.NewSiege(
 		cfg.RequestSpinnerAddr,
+		cfg.ConcurrentRequests,
 		httpClient,
-		logCacheClient)
+		logCacheClient,
+	)
 
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), siegeHandler))
 }
 
 func httpClient(cfg config) *http.Client {
 	return &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 1 * time.Minute,
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: cfg.SkipSSLValidation,
@@ -52,6 +56,7 @@ type config struct {
 	Port               int    `env:"PORT,                 required"`
 	LogCacheAddr       string `env:"LOG_CACHE_ADDR,       required"`
 	RequestSpinnerAddr string `env:"REQUEST_SPINNER_ADDR, required"`
+	ConcurrentRequests int    `env:"CONCURRENT_REQUESTS"`
 
 	UAAAddr         string `env:"UAA_ADDR,          required"`
 	UAAClient       string `env:"UAA_CLIENT,        required"`
@@ -62,7 +67,8 @@ type config struct {
 
 func loadConfig() config {
 	c := config{
-		SkipSSLValidation: false,
+		SkipSSLValidation:  false,
+		ConcurrentRequests: 25,
 	}
 
 	if err := envstruct.Load(&c); err != nil {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"sync/atomic"
 
 	"code.cloudfoundry.org/go-log-cache/rpc/logcache"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-siege/internal/handlers"
@@ -40,7 +41,7 @@ var _ = Describe("Siege", func() {
 
 		spyMetaFetcher = newSpyMetaFetcher()
 		recorder = httptest.NewRecorder()
-		s = handlers.NewSiege(server.URL, http.DefaultClient, spyMetaFetcher)
+		s = handlers.NewSiege(server.URL, 25, http.DefaultClient, spyMetaFetcher)
 	})
 
 	It("starts a request spinner for each source ID from meta", func() {
@@ -62,37 +63,32 @@ var _ = Describe("Siege", func() {
 			rs = append(rs, <-requests)
 		}
 
-		Expect(rs).To(ConsistOf(
+		Eventually(func() []string { return rs }).Should(ConsistOf(
 			"POST->/v1/start?source_id=a",
 			"POST->/v1/start?source_id=b",
 			"POST->/v1/start?source_id=c",
 		))
 	})
 
-	It("returns a 500 when the request to request spinner fails", func() {
-		failer := &httpFailer{}
+	It("hits request spinner async for each source ID", func() {
 		spyMetaFetcher.results = map[string]*logcache.MetaInfo{
 			"a": &logcache.MetaInfo{},
+			"b": &logcache.MetaInfo{},
+			"c": &logcache.MetaInfo{},
 		}
 
-		s = handlers.NewSiege(server.URL, failer, spyMetaFetcher)
+		var requests int64
+		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			atomic.AddInt64(&requests, 1)
+
+			doneChan := make(chan struct{})
+			<-doneChan
+		}))
+
 		req := httptest.NewRequest("POST", "/v1/siege", nil)
-		s.ServeHTTP(recorder, req)
-
-		Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-		Expect(recorder.Body.String()).To(MatchJSON(`{"error":"some-error"}`))
-	})
-
-	It("returns a 500 when the request spinner returns non 200", func() {
-		spyMetaFetcher.results = map[string]*logcache.MetaInfo{
-			"a": &logcache.MetaInfo{},
-		}
-		statusCodes <- 410
-		req := httptest.NewRequest("POST", "/v1/siege", nil)
-		s.ServeHTTP(recorder, req)
-
-		Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-		Expect(recorder.Body.String()).To(MatchJSON(`{"error":"unexpected status code from request spinner: 410"}`))
+		s = handlers.NewSiege(server.URL, 25, http.DefaultClient, spyMetaFetcher)
+		go s.ServeHTTP(recorder, req)
+		Eventually(func() int { return int(atomic.LoadInt64(&requests)) }).Should(Equal(3))
 	})
 
 	It("uses the request context to fetch the meta", func() {
