@@ -21,7 +21,7 @@ func main() {
 	httpClient := httpClient(cfg)
 	addr := fmt.Sprintf(":%d", cfg.Port)
 	logCacheClient := logcache.NewClient(
-		addr,
+		cfg.LogCacheAddr,
 		logcache.WithHTTPClient(httpClient))
 
 	siegeHandler := handlers.NewSiege(addr, httpClient, logCacheClient)
@@ -40,8 +40,9 @@ func httpClient(cfg config) *http.Client {
 }
 
 type config struct {
-	Port              int  `env:"PORT, required"`
-	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION"`
+	Port              int    `env:"PORT,           required"`
+	LogCacheAddr      string `env:"LOG_CACHE_ADDR, required"`
+	SkipSSLValidation bool   `env:"SKIP_SSL_VALIDATION"`
 }
 
 func loadConfig() config {
