@@ -29,7 +29,7 @@ var _ = Describe("Siege", func() {
 		requests = make(chan string, 10)
 		statusCodes = make(chan int, 10)
 		server = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			requests <- fmt.Sprintf("%s->%s", r.Method, r.URL.Path)
+			requests <- fmt.Sprintf("%s->%s", r.Method, r.URL.String())
 
 			select {
 			case code := <-statusCodes:
@@ -63,9 +63,9 @@ var _ = Describe("Siege", func() {
 		}
 
 		Expect(rs).To(ConsistOf(
-			"POST->/v1/start/a",
-			"POST->/v1/start/b",
-			"POST->/v1/start/c",
+			"POST->/v1/start?source_id=a",
+			"POST->/v1/start?source_id=b",
+			"POST->/v1/start?source_id=c",
 		))
 	})
 

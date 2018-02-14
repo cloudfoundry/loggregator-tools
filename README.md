@@ -43,6 +43,11 @@ with the go-buildpack. It is used by the cf-syslog-drain black box tests.
 Request Spinner reads from Log Cache for load testing purposes. The request
 can be configured to hit specific source IDs, at a given cycle and delay.
 
+## [Log Cache Siege](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-siege)
+
+Log Cache Siege is configured with the address of a request-spinner to
+instruct request-spinner to hit every available source ID.
+
 ## [Slow Consumer](https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/slow_consumer)
 
 The Slow Consumer is a firehose nozzle that will induce the TrafficController

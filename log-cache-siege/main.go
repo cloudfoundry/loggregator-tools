@@ -19,13 +19,22 @@ func main() {
 	cfg := loadConfig()
 
 	httpClient := httpClient(cfg)
-	addr := fmt.Sprintf(":%d", cfg.Port)
+	oauthHttpClient := logcache.NewOauth2HTTPClient(
+		cfg.UAAAddr,
+		cfg.UAAClient,
+		cfg.UAAClientSecret,
+		logcache.WithOauth2HTTPClient(httpClient))
+
 	logCacheClient := logcache.NewClient(
 		cfg.LogCacheAddr,
-		logcache.WithHTTPClient(httpClient))
+		logcache.WithHTTPClient(oauthHttpClient))
 
-	siegeHandler := handlers.NewSiege(addr, httpClient, logCacheClient)
-	log.Fatal(http.ListenAndServe(addr, siegeHandler))
+	siegeHandler := handlers.NewSiege(
+		cfg.RequestSpinnerAddr,
+		httpClient,
+		logCacheClient)
+
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", cfg.Port), siegeHandler))
 }
 
 func httpClient(cfg config) *http.Client {
@@ -40,9 +49,15 @@ func httpClient(cfg config) *http.Client {
 }
 
 type config struct {
-	Port              int    `env:"PORT,           required"`
-	LogCacheAddr      string `env:"LOG_CACHE_ADDR, required"`
-	SkipSSLValidation bool   `env:"SKIP_SSL_VALIDATION"`
+	Port               int    `env:"PORT,                 required"`
+	LogCacheAddr       string `env:"LOG_CACHE_ADDR,       required"`
+	RequestSpinnerAddr string `env:"REQUEST_SPINNER_ADDR, required"`
+
+	UAAAddr         string `env:"UAA_ADDR,          required"`
+	UAAClient       string `env:"UAA_CLIENT,        required"`
+	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
+
+	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION"`
 }
 
 func loadConfig() config {

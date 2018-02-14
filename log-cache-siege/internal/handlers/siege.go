@@ -5,15 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"net/url"
 
 	"code.cloudfoundry.org/go-log-cache/rpc/logcache"
 )
 
 type Siege struct {
-	f MetaFetcher
-	c HTTPClient
-	u url.URL
+	f                  MetaFetcher
+	c                  HTTPClient
+	requestSpinnerAddr string
 }
 
 type MetaFetcher interface {
@@ -25,17 +24,10 @@ type HTTPClient interface {
 }
 
 func NewSiege(addr string, c HTTPClient, f MetaFetcher) *Siege {
-	u, err := url.Parse(addr)
-	if err != nil {
-		log.Panicf("failed to parse URL: %s", err)
-	}
-
 	return &Siege{
-		f: f,
-		c: c,
-
-		// Save a copy of the URL to ensure we can alter it without races.
-		u: *u,
+		f:                  f,
+		c:                  c,
+		requestSpinnerAddr: addr,
 	}
 }
 
@@ -58,8 +50,9 @@ func (s *Siege) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for sourceID := range m {
-		s.u.Path = fmt.Sprintf("/v1/start/%s", sourceID)
-		req, err := http.NewRequest("POST", s.u.String(), nil)
+		addr := fmt.Sprintf("%s/v1/start?source_id=%s", s.requestSpinnerAddr, sourceID)
+
+		req, err := http.NewRequest("POST", addr, nil)
 		if err != nil {
 			log.Panicf("failed to create request: %s", err)
 		}
