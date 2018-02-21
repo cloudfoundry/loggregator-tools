@@ -57,6 +57,10 @@ to cut off the nozzle.
 
 The post printer is a CF application that prints every request to stderr.
 
+## [Datadog Forwarder][datadog-forwarder]
+
+The Datadog forwarder reads from Log Cache and forwards metrics to Datadog.
+
 ## [CF LogMon][cf-logmon]
 
 The CF LogMon performs a blacbox test for measuring message reliability when
@@ -77,4 +81,5 @@ and available via JSON and the Firehose.
 [log-cache-siege]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-siege
 [slow-consumer]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/slow_consumer
 [postprinter]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/postprinter
+[datadog-forwarder]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-forwarders/datadog
 [cf-logmon]: https://github.com/cloudfoundry-incubator/cf-logmon
