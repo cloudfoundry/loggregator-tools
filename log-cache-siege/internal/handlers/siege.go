@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"sync"
 
-	"code.cloudfoundry.org/go-log-cache/rpc/logcache"
+	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 )
 
 type Siege struct {
@@ -20,7 +20,7 @@ type Siege struct {
 }
 
 type MetaFetcher interface {
-	Meta(ctx context.Context) (map[string]*logcache.MetaInfo, error)
+	Meta(ctx context.Context) (map[string]*logcache_v1.MetaInfo, error)
 }
 
 type HTTPClient interface {

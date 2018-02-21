@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 
-	"code.cloudfoundry.org/go-log-cache/rpc/logcache"
+	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-siege/internal/handlers"
 
 	. "github.com/onsi/ginkgo"
@@ -45,10 +45,10 @@ var _ = Describe("Siege", func() {
 	})
 
 	It("starts a request spinner for each source ID from meta", func() {
-		spyMetaFetcher.results = map[string]*logcache.MetaInfo{
-			"a": &logcache.MetaInfo{},
-			"b": &logcache.MetaInfo{},
-			"c": &logcache.MetaInfo{},
+		spyMetaFetcher.results = map[string]*logcache_v1.MetaInfo{
+			"a": &logcache_v1.MetaInfo{},
+			"b": &logcache_v1.MetaInfo{},
+			"c": &logcache_v1.MetaInfo{},
 		}
 
 		req := httptest.NewRequest("POST", "/v1/siege", nil)
@@ -71,10 +71,10 @@ var _ = Describe("Siege", func() {
 	})
 
 	It("hits request spinner async for each source ID", func() {
-		spyMetaFetcher.results = map[string]*logcache.MetaInfo{
-			"a": &logcache.MetaInfo{},
-			"b": &logcache.MetaInfo{},
-			"c": &logcache.MetaInfo{},
+		spyMetaFetcher.results = map[string]*logcache_v1.MetaInfo{
+			"a": &logcache_v1.MetaInfo{},
+			"b": &logcache_v1.MetaInfo{},
+			"c": &logcache_v1.MetaInfo{},
 		}
 
 		var requests int64
@@ -128,7 +128,7 @@ var _ = Describe("Siege", func() {
 
 type spyMetaFetcher struct {
 	ctx     context.Context
-	results map[string]*logcache.MetaInfo
+	results map[string]*logcache_v1.MetaInfo
 	err     error
 }
 
@@ -136,7 +136,7 @@ func newSpyMetaFetcher() *spyMetaFetcher {
 	return &spyMetaFetcher{}
 }
 
-func (s *spyMetaFetcher) Meta(ctx context.Context) (map[string]*logcache.MetaInfo, error) {
+func (s *spyMetaFetcher) Meta(ctx context.Context) (map[string]*logcache_v1.MetaInfo, error) {
 	s.ctx = ctx
 	return s.results, s.err
 }

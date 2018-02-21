@@ -6,7 +6,7 @@ import (
 	"regexp"
 	"time"
 
-	rpc "code.cloudfoundry.org/go-log-cache/rpc/logcache"
+	rpc "code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 )
 
 // BlacklistRegex
