@@ -10,10 +10,11 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/go-envstruct"
-	"code.cloudfoundry.org/loggregator/plumbing"
-	"code.cloudfoundry.org/loggregator/plumbing/v2"
+	"code.cloudfoundry.org/go-loggregator"
+	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 )
 
 type config struct {
@@ -31,17 +32,18 @@ func main() {
 		log.Fatal(err)
 	}
 
-	creds, err := plumbing.NewClientCredentials(
+	creds, err := loggregator.NewIngressTLSConfig(
 		c.CertFile,
 		c.KeyFile,
 		c.CAFile,
-		"agent",
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	conn, err := grpc.Dial(c.Target, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.Dial(c.Target, grpc.WithTransportCredentials(
+		credentials.NewTLS(creds),
+	))
 	if err != nil {
 		log.Fatal(err)
 	}
