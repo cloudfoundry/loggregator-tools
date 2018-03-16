@@ -22,7 +22,7 @@ func main() {
 
 	cfg := LoadConfig()
 
-	groupClient := logcache.NewGroupReaderClient(
+	groupClient := logcache.NewShardGroupReaderClient(
 		cfg.LogCacheHTTPAddr,
 		logcache.WithHTTPClient(newOauth2HTTPClient(cfg)),
 	)

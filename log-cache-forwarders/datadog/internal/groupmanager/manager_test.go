@@ -35,8 +35,8 @@ var _ = Describe("Manager", func() {
 		t <- time.Now()
 
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
-			addRequest{name: "group-name", sourceID: "source-id-1"},
-			addRequest{name: "group-name", sourceID: "source-id-2"},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
 		))
 	})
 })
@@ -62,11 +62,11 @@ type spyGroupUpdater struct {
 	addRequests []addRequest
 }
 
-func (s *spyGroupUpdater) AddToGroup(ctx context.Context, name, sourceID string) error {
+func (s *spyGroupUpdater) SetShardGroup(ctx context.Context, name string, sourceIDs ...string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.addRequests = append(s.addRequests, addRequest{name: name, sourceID: sourceID})
+	s.addRequests = append(s.addRequests, addRequest{name: name, sourceIDs: sourceIDs})
 	return nil
 }
 
@@ -81,6 +81,6 @@ func (s *spyGroupUpdater) AddRequests() []addRequest {
 }
 
 type addRequest struct {
-	name     string
-	sourceID string
+	name      string
+	sourceIDs []string
 }

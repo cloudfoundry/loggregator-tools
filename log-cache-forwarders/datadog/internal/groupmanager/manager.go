@@ -21,8 +21,8 @@ type GroupProvider interface {
 
 // GroupUpdater is used to add (and keep alive) the source IDs for a group.
 type GroupUpdater interface {
-	// AddToGroup adds source IDs to the LogCache group.
-	AddToGroup(ctx context.Context, name, sourceID string) error
+	// SetShardGroup adds source IDs to the LogCache sub-groups.
+	SetShardGroup(ctx context.Context, name string, sourceIDs ...string) error
 }
 
 // Start creates and starts a Manager.
@@ -46,6 +46,6 @@ func (m *Manager) run() {
 
 func (m *Manager) updateSourceIDs(sourceIDs []string) {
 	for _, id := range sourceIDs {
-		m.gu.AddToGroup(context.Background(), m.groupName, id)
+		m.gu.SetShardGroup(context.Background(), m.groupName, id)
 	}
 }
