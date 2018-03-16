@@ -25,7 +25,7 @@ type Config struct {
 
 	UAAAddr         string `env:"UAA_ADDR,          required"`
 	UAAClient       string `env:"UAA_CLIENT,        required"`
-	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required"`
+	UAAClientSecret string `env:"UAA_CLIENT_SECRET, required, noreport"`
 
 	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION"`
 }
