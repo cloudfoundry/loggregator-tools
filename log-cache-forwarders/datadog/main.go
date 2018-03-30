@@ -32,10 +32,15 @@ func main() {
 		logcache.WithHTTPClient(newOauth2HTTPClient(cfg)),
 	)
 
-	provider := sourceidprovider.NewBlacklistRegex(
-		cfg.SourceIDBlacklist,
-		client,
-	)
+	var provider groupmanager.GroupProvider
+	if cfg.SourceIDBlacklist == "" {
+		provider = sourceidprovider.All(client)
+	} else {
+		provider = sourceidprovider.NewBlacklistRegex(
+			cfg.SourceIDBlacklist,
+			client,
+		)
+	}
 
 	groupmanager.Start(
 		cfg.LogCacheGroupName,
