@@ -84,6 +84,7 @@ func newOauth2HTTPClient(cfg Config) *logcache.Oauth2HTTPClient {
 
 func buildDatadogWriter(ddc *datadog.Client, host string, tags []string) func([]*loggregator_v2.Envelope) bool {
 	return func(es []*loggregator_v2.Envelope) bool {
+		var i int
 		for _, e := range es {
 			switch e.Message.(type) {
 			case *loggregator_v2.Envelope_Gauge:
@@ -104,13 +105,11 @@ func buildDatadogWriter(ddc *datadog.Client, host string, tags []string) func([]
 						Tags:   tags,
 					}
 
-					log.Printf("Posting %s: %v", name, value.GetValue())
-
 					err := ddc.PostMetrics([]datadog.Metric{metric})
-
 					if err != nil {
 						log.Printf("failed to write metrics to DataDog: %s", err)
 					}
+					i++
 				}
 			case *loggregator_v2.Envelope_Counter:
 				name := e.GetCounter().GetName()
@@ -127,16 +126,18 @@ func buildDatadogWriter(ddc *datadog.Client, host string, tags []string) func([]
 					Tags:   tags,
 				}
 
-				log.Printf("Posting %s: %v", name, e.GetCounter().GetTotal())
-
 				err := ddc.PostMetrics([]datadog.Metric{metric})
 				if err != nil {
 					log.Printf("failed to write metrics to DataDog: %s", err)
 				}
+				i++
 			default:
 				continue
 			}
 		}
+
+		log.Printf("posted %d metrics", i)
+
 		return true
 	}
 }
