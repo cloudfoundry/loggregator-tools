@@ -2,6 +2,7 @@ package groupmanager
 
 import (
 	"context"
+	"log"
 	"time"
 )
 
@@ -40,12 +41,10 @@ func Start(groupName string, ticker <-chan time.Time, gp GroupProvider, gu Group
 func (m *Manager) run() {
 	for range m.ticker {
 		sourceIDs := m.gp.SourceIDs()
-		m.updateSourceIDs(sourceIDs)
-	}
-}
 
-func (m *Manager) updateSourceIDs(sourceIDs []string) {
-	for _, id := range sourceIDs {
-		m.gu.SetShardGroup(context.Background(), m.groupName, id)
+		err := m.gu.SetShardGroup(context.Background(), m.groupName, sourceIDs...)
+		if err != nil {
+			log.Printf("error adding to group: %s", err)
+		}
 	}
 }

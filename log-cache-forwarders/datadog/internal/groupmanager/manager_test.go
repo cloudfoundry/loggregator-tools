@@ -26,7 +26,7 @@ var _ = Describe("Manager", func() {
 		groupmanager.Start("group-name", t, stubGroupProvider, spyGroupUpdater)
 	})
 
-	It("fetches meta and adds to the 0group", func() {
+	It("fetches meta and adds to the group", func() {
 		stubGroupProvider.sourceIDs = []string{
 			"source-id-1",
 			"source-id-2",
@@ -35,8 +35,10 @@ var _ = Describe("Manager", func() {
 		t <- time.Now()
 
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+			addRequest{name: "group-name", sourceIDs: []string{
+				"source-id-1",
+				"source-id-2",
+			}},
 		))
 	})
 })
