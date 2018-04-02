@@ -26,7 +26,9 @@ func (p *AllProvider) SourceIDs() []string {
 
 	var results []string
 	for sourceID := range mi {
-		results = append(results, sourceID)
+		if sourceID != "" {
+			results = append(results, sourceID)
+		}
 	}
 
 	return results

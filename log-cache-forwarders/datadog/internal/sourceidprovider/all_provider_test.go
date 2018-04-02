@@ -31,8 +31,18 @@ var _ = Describe("AllProvider", func() {
 		))
 	})
 
-	It("returns an empty string when meta has an error", func() {
+	It("returns an empty slice when meta has an error", func() {
 		stubMetaFetcher.metaError = errors.New("meta had an issue")
+
+		provider := sourceidprovider.All(stubMetaFetcher)
+
+		Expect(provider.SourceIDs()).To(HaveLen(0))
+	})
+
+	It("ignores empty source id", func() {
+		stubMetaFetcher.metaResponse = map[string]*rpc.MetaInfo{
+			"": {},
+		}
 
 		provider := sourceidprovider.All(stubMetaFetcher)
 
