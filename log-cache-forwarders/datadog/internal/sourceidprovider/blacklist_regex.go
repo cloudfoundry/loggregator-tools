@@ -9,31 +9,32 @@ import (
 	rpc "code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 )
 
-// BlacklistRegex
-type BlacklistRegex struct {
-	f MetaFetcher
-	r *regexp.Regexp
+// Regex provides source IDs that are filtered by a regex.
+type Regex struct {
+	f           MetaFetcher
+	isBlacklist bool
+	r           *regexp.Regexp
 }
 
 // MetaFetcher returns meta information from LogCache.
 type MetaFetcher interface {
-
 	// Meta returns meta information from LogCache.
 	Meta(ctx context.Context) (map[string]*rpc.MetaInfo, error)
 }
 
-// NewBlacklistRegex compiles the configured regex pattern. If the pattern
+// NewRegex compiles the configured regex pattern. If the pattern
 // fails, it will panic.
-func NewBlacklistRegex(pattern string, f MetaFetcher) *BlacklistRegex {
-	return &BlacklistRegex{
-		f: f,
-		r: regexp.MustCompile(pattern),
+func NewRegex(isBlacklist bool, pattern string, f MetaFetcher) *Regex {
+	return &Regex{
+		f:           f,
+		isBlacklist: isBlacklist,
+		r:           regexp.MustCompile(pattern),
 	}
 }
 
 // SourceIDs returns each source ID provided by the MetaFetcher that did NOT
 // match the given regex pattern.
-func (r *BlacklistRegex) SourceIDs() []string {
+func (r *Regex) SourceIDs() []string {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mi, err := r.f.Meta(ctx)
 	if err != nil {
@@ -43,11 +44,15 @@ func (r *BlacklistRegex) SourceIDs() []string {
 
 	var results []string
 	for sourceID := range mi {
-		if r.r.MatchString(sourceID) {
-			continue
+		// blacklist match
+		//    0        0    append
+		//    1        0    continue
+		//    0        1    continue
+		//    1        1    append
+		match := r.r.MatchString(sourceID)
+		if r.isBlacklist && !match || !r.isBlacklist && match {
+			results = append(results, sourceID)
 		}
-
-		results = append(results, sourceID)
 	}
 
 	return results

@@ -11,7 +11,9 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-var _ = Describe("BlacklistRegexProvdier", func() {
+const guidRegex = `[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}`
+
+var _ = Describe("RegexProvdier", func() {
 	var (
 		stubMetaFetcher *stubMetaFetcher
 	)
@@ -26,17 +28,30 @@ var _ = Describe("BlacklistRegexProvdier", func() {
 			"doppler": {},
 		}
 
-		regexProvider := sourceidprovider.NewBlacklistRegex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", stubMetaFetcher)
+		whitelistProvider := sourceidprovider.NewRegex(
+			false,
+			guidRegex,
+			stubMetaFetcher,
+		)
+		Expect(whitelistProvider.SourceIDs()).To(ConsistOf("88d17322-37f6-4b1f-8e3d-9e4a20b04efe"))
 
-		Expect(regexProvider.SourceIDs()).To(ConsistOf("doppler"))
+		blacklistProvider := sourceidprovider.NewRegex(
+			true,
+			guidRegex,
+			stubMetaFetcher,
+		)
+		Expect(blacklistProvider.SourceIDs()).To(ConsistOf("doppler"))
 	})
 
-	It("returns an empty string when meta has an error", func() {
+	It("returns an empty slice when meta has an error", func() {
 		stubMetaFetcher.metaError = errors.New("meta had an issue")
 
-		regexProvider := sourceidprovider.NewBlacklistRegex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}", stubMetaFetcher)
-
-		Expect(regexProvider.SourceIDs()).To(HaveLen(0))
+		blacklistProvider := sourceidprovider.NewRegex(
+			true,
+			guidRegex,
+			stubMetaFetcher,
+		)
+		Expect(blacklistProvider.SourceIDs()).To(HaveLen(0))
 	})
 })
 

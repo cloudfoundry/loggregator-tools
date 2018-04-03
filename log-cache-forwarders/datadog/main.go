@@ -35,12 +35,24 @@ func main() {
 		logcache.WithHTTPClient(newOauth2HTTPClient(cfg)),
 	)
 
-	var provider groupmanager.GroupProvider
-	if cfg.SourceIDBlacklist == "" {
-		provider = sourceidprovider.All(client)
-	} else {
-		provider = sourceidprovider.NewBlacklistRegex(
+	if cfg.SourceIDWhitelist != "" && cfg.SourceIDBlacklist != "" {
+		log.Fatalf("Can't have a whitelist and a blacklist...")
+	}
+
+	var provider groupmanager.GroupProvider = sourceidprovider.All(client)
+
+	if cfg.SourceIDBlacklist != "" {
+		provider = sourceidprovider.NewRegex(
+			true,
 			cfg.SourceIDBlacklist,
+			client,
+		)
+	}
+
+	if cfg.SourceIDWhitelist != "" {
+		provider = sourceidprovider.NewRegex(
+			false,
+			cfg.SourceIDWhitelist,
 			client,
 		)
 	}

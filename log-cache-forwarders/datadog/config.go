@@ -8,7 +8,11 @@ import (
 
 type Config struct {
 	// SourceIDBlacklist is a regular expression for envelopes to be excluded.
+	// If this is specified you can not use SourceIDWhitelist.
 	SourceIDBlacklist string `env:"SOURCE_ID_BLACKLIST"`
+	// SourceIDWhiteist is a regular expression for envelopes to be included.
+	// If this is specified you can not use SourceIDBlacklist.
+	SourceIDWhitelist string `env:"SOURCE_ID_WHITELIST"`
 
 	DatadogAPIKey string `env:"DATADOG_API_KEY, required, noreport"`
 	MetricHost    string `env:"METRIC_HOST, required"`
