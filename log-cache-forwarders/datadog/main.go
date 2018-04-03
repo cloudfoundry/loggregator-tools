@@ -7,9 +7,11 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
+	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/datadog/internal/groupmanager"
@@ -21,6 +23,7 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 
 	cfg := LoadConfig()
+	envstruct.WriteReport(&cfg)
 
 	groupClient := logcache.NewShardGroupReaderClient(
 		cfg.LogCacheHTTPAddr,
@@ -61,6 +64,7 @@ func main() {
 		reader,
 		logcache.WithWalkStartTime(time.Now()),
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(250*time.Millisecond)),
+		logcache.WithWalkLogger(log.New(os.Stderr, "", log.LstdFlags)),
 	)
 }
 

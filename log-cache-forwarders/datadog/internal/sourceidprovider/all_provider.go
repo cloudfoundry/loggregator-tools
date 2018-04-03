@@ -31,5 +31,9 @@ func (p *AllProvider) SourceIDs() []string {
 		}
 	}
 
+	if len(results) == 0 {
+		log.Println("[WARN] source ID provider did not find any source IDs...")
+	}
+
 	return results
 }
