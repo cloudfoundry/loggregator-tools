@@ -38,6 +38,9 @@ func Start(groupName string, ticker <-chan time.Time, gp GroupProvider, gu Group
 }
 
 func (m *Manager) run() {
+	sourceIDs := m.gp.SourceIDs()
+	m.updateSourceIDs(sourceIDs)
+
 	for range m.ticker {
 		sourceIDs := m.gp.SourceIDs()
 		m.updateSourceIDs(sourceIDs)

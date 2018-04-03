@@ -26,13 +26,30 @@ var _ = Describe("Manager", func() {
 		groupmanager.Start("group-name", t, stubGroupProvider, spyGroupUpdater)
 	})
 
-	It("fetches meta and adds to the 0group", func() {
+	It("fetches meta and adds to the group", func() {
 		stubGroupProvider.sourceIDs = []string{
 			"source-id-1",
 			"source-id-2",
 		}
 
 		t <- time.Now()
+
+		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
+			// immediate fetch
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+
+			// fetch after tick delay
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+		))
+	})
+
+	It("immediately fetches", func() {
+		stubGroupProvider.sourceIDs = []string{
+			"source-id-1",
+			"source-id-2",
+		}
 
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
 			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
