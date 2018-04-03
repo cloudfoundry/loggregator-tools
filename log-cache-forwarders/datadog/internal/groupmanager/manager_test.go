@@ -23,15 +23,15 @@ var _ = Describe("Manager", func() {
 		stubGroupProvider = newStubGroupProvider()
 		t = make(chan time.Time, 1)
 
-		groupmanager.Start("group-name", t, stubGroupProvider, spyGroupUpdater)
-	})
-
-	It("fetches meta and adds to the group", func() {
 		stubGroupProvider.sourceIDs = []string{
 			"source-id-1",
 			"source-id-2",
 		}
 
+		groupmanager.Start("group-name", t, stubGroupProvider, spyGroupUpdater)
+	})
+
+	It("fetches meta and adds to the group", func() {
 		t <- time.Now()
 
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
@@ -46,11 +46,6 @@ var _ = Describe("Manager", func() {
 	})
 
 	It("immediately fetches", func() {
-		stubGroupProvider.sourceIDs = []string{
-			"source-id-1",
-			"source-id-2",
-		}
-
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
 			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
 			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
