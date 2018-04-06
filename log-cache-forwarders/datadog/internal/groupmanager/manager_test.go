@@ -36,19 +36,16 @@ var _ = Describe("Manager", func() {
 
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
 			// immediate fetch
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1", "source-id-2"}},
 
 			// fetch after tick delay
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1", "source-id-2"}},
 		))
 	})
 
 	It("immediately fetches", func() {
 		Eventually(spyGroupUpdater.AddRequests).Should(ConsistOf(
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-1"}},
-			addRequest{name: "group-name", sourceIDs: []string{"source-id-2"}},
+			addRequest{name: "group-name", sourceIDs: []string{"source-id-1", "source-id-2"}},
 		))
 	})
 })

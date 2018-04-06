@@ -17,6 +17,7 @@ func All(f MetaFetcher) *AllProvider {
 }
 
 func (p *AllProvider) SourceIDs() []string {
+	start := time.Now()
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 	mi, err := p.f.Meta(ctx)
 	if err != nil {
@@ -35,5 +36,6 @@ func (p *AllProvider) SourceIDs() []string {
 		log.Println("[WARN] source ID provider did not find any source IDs...")
 	}
 
+	log.Printf("Got Source IDs in %s", time.Since(start).String())
 	return results
 }

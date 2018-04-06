@@ -40,18 +40,20 @@ func Start(groupName string, ticker <-chan time.Time, gp GroupProvider, gu Group
 
 func (m *Manager) run() {
 	sourceIDs := m.gp.SourceIDs()
+
 	m.updateSourceIDs(sourceIDs)
 
 	for range m.ticker {
 		sourceIDs := m.gp.SourceIDs()
+
 		m.updateSourceIDs(sourceIDs)
 	}
 }
 
 func (m *Manager) updateSourceIDs(sourceIDs []string) {
-	for _, id := range sourceIDs {
-		if err := m.gu.SetShardGroup(context.Background(), m.groupName, id); err != nil {
-			log.Printf("failed to set shard group: %s", err)
-		}
+	start := time.Now()
+	if err := m.gu.SetShardGroup(context.Background(), m.groupName, sourceIDs...); err != nil {
+		log.Printf("failed to set shard group: %s", err)
 	}
+	log.Printf("Setting %d source ids took %s", len(sourceIDs), time.Since(start).String())
 }
