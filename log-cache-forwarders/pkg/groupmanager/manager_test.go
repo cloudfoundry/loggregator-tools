@@ -5,8 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/datadog/internal/groupmanager"
-
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/groupmanager"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
