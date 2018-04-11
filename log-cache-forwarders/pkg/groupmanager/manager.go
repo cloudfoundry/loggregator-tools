@@ -9,10 +9,17 @@ import (
 // Manager syncs the source IDs from the GroupProvider with the GroupUpdater.
 // It does so at the configured interval.
 type Manager struct {
-	groupName string
-	ticker    <-chan time.Time
-	gp        GroupProvider
-	gu        GroupUpdater
+	groupName      string
+	ticker         <-chan time.Time
+	gp             GroupProvider
+	gu             GroupUpdater
+	sourceIDMetric func(float64)
+}
+
+// Metrics registers Gauge metrics.
+type metrics interface {
+	// NewGauge returns a function to set the value for the given metric.
+	NewGauge(name string) func(value float64)
 }
 
 // GroupProvider returns the desired SourceIDs.
@@ -27,26 +34,41 @@ type GroupUpdater interface {
 }
 
 // Start creates and starts a Manager.
-func Start(groupName string, ticker <-chan time.Time, gp GroupProvider, gu GroupUpdater) {
+func Start(
+	groupName string,
+	ticker <-chan time.Time,
+	gp GroupProvider,
+	gu GroupUpdater,
+	opts ...GroupManagerOption,
+) {
 	m := &Manager{
-		groupName: groupName,
-		ticker:    ticker,
-		gp:        gp,
-		gu:        gu,
+		groupName:      groupName,
+		ticker:         ticker,
+		gp:             gp,
+		gu:             gu,
+		sourceIDMetric: func(float64) {},
+	}
+
+	for _, o := range opts {
+		o(m)
 	}
 
 	go m.run()
 }
 
-func (m *Manager) run() {
-	sourceIDs := m.gp.SourceIDs()
+type GroupManagerOption func(*Manager)
 
-	m.updateSourceIDs(sourceIDs)
+func WithMetrics(metrics metrics) GroupManagerOption {
+	return func(m *Manager) {
+		m.sourceIDMetric = metrics.NewGauge("SourceIDs")
+	}
+}
+
+func (m *Manager) run() {
+	m.updateSourceIDs(m.gp.SourceIDs())
 
 	for range m.ticker {
-		sourceIDs := m.gp.SourceIDs()
-
-		m.updateSourceIDs(sourceIDs)
+		m.updateSourceIDs(m.gp.SourceIDs())
 	}
 }
 
@@ -55,5 +77,6 @@ func (m *Manager) updateSourceIDs(sourceIDs []string) {
 	if err := m.gu.SetShardGroup(context.Background(), m.groupName, sourceIDs...); err != nil {
 		log.Printf("failed to set shard group: %s", err)
 	}
+	m.sourceIDMetric(float64(len(sourceIDs)))
 	log.Printf("Setting %d source ids took %s", len(sourceIDs), time.Since(start).String())
 }

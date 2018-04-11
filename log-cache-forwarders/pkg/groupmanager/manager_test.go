@@ -14,11 +14,13 @@ var _ = Describe("Manager", func() {
 	var (
 		stubGroupProvider *stubGroupProvider
 		spyGroupUpdater   *spyGroupUpdater
+		spyMetrics        *spyMetrics
 		t                 chan time.Time
 	)
 
 	BeforeEach(func() {
 		spyGroupUpdater = newSpyGroupUpdater()
+		spyMetrics = newSpyMetrics()
 		stubGroupProvider = newStubGroupProvider()
 		t = make(chan time.Time, 1)
 
@@ -27,7 +29,13 @@ var _ = Describe("Manager", func() {
 			"source-id-2",
 		}
 
-		groupmanager.Start("group-name", t, stubGroupProvider, spyGroupUpdater)
+		groupmanager.Start(
+			"group-name",
+			t,
+			stubGroupProvider,
+			spyGroupUpdater,
+			groupmanager.WithMetrics(spyMetrics),
+		)
 	})
 
 	It("fetches meta and adds to the group", func() {
@@ -47,7 +55,34 @@ var _ = Describe("Manager", func() {
 			addRequest{name: "group-name", sourceIDs: []string{"source-id-1", "source-id-2"}},
 		))
 	})
+
+	It("sets the source id len as a metric", func() {
+		Eventually(spyMetrics.value).Should(BeEquivalentTo(2))
+	})
 })
+
+type spyMetrics struct {
+	mu     sync.Mutex
+	value_ float64
+}
+
+func newSpyMetrics() *spyMetrics {
+	return &spyMetrics{}
+}
+
+func (s *spyMetrics) NewGauge(name string) func(float64) {
+	return func(v float64) {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.value_ = v
+	}
+}
+
+func (s *spyMetrics) value() float64 {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.value_
+}
 
 func newStubGroupProvider() *stubGroupProvider {
 	return &stubGroupProvider{}
