@@ -14,7 +14,7 @@ type Config struct {
 	SourceHostname string `env:"SOURCE_HOST_NAME, required"`
 	GroupName      string `env:"GROUP_NAME"`
 
-	UAAAddr      string `env:"UAA_ADDR,      required"`
+	UAAURL       string `env:"UAA_URL,       required"`
 	ClientID     string `env:"CLIENT_ID,     required"`
 	ClientSecret string `env:"CLIENT_SECRET, noreport"`
 

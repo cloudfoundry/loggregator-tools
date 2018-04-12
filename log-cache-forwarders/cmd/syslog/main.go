@@ -90,7 +90,7 @@ func newOauth2HTTPClient(cfg Config) *logcache.Oauth2HTTPClient {
 	}
 
 	return logcache.NewOauth2HTTPClient(
-		cfg.UAAAddr,
+		cfg.UAAURL,
 		cfg.ClientID,
 		cfg.ClientSecret,
 		logcache.WithOauth2HTTPClient(client),
