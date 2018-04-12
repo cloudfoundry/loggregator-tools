@@ -14,16 +14,15 @@ type Config struct {
 	SourceHostname string `env:"SOURCE_HOST_NAME, required"`
 	GroupName      string `env:"GROUP_NAME"`
 
-	UAAAddr      string `env:"UAA_ADDR,        required"`
-	ClientID     string `env:"CLIENT_ID,       required"`
-	ClientSecret string `env:"CLIENT_SECRET,            noreport"`
+	UAAAddr      string `env:"UAA_ADDR,      required"`
+	ClientID     string `env:"CLIENT_ID,     required"`
+	ClientSecret string `env:"CLIENT_SECRET, noreport"`
 
-	Username string `env:"USERNAME,      required"`
-	Password string `env:"USER_PASSWORD, required, noreport"`
+	Username string `env:"USERNAME, required"`
+	Password string `env:"PASSWORD, required, noreport"`
 
-	LogCacheHTTPAddr string `env:"LOG_CACHE_HTTP_ADDR,  required"`
-	SyslogAddr       string `env:"SYSLOG_ADDR,          required"`
-	SyslogURL        *url.URL
+	LogCacheHTTPAddr string   `env:"LOG_CACHE_HTTP_ADDR, required"`
+	SyslogURL        *url.URL `env:"SYSLOG_URL,          required"`
 
 	SkipCertVerify bool `env:"SKIP_CERT_VERIFY"`
 
@@ -48,12 +47,6 @@ func LoadConfig() Config {
 	if err := envstruct.Load(&cfg); err != nil {
 		log.Fatalf("failed to load config from environment: %s", err)
 	}
-
-	syslogURL, err := url.Parse(cfg.SyslogAddr)
-	if err != nil {
-		log.Fatalf("invalid syslog address: %s", err)
-	}
-	cfg.SyslogURL = syslogURL
 
 	return cfg
 }
