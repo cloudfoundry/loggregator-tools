@@ -51,7 +51,6 @@ func main() {
 		log.Print("writing a batch")
 		ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
 		_, err := client.Send(ctx, &logcache_v1.SendRequest{
-			LocalOnly: true,
 			Envelopes: &loggregator_v2.EnvelopeBatch{
 				Batch: batch,
 			},
