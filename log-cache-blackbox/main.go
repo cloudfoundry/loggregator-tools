@@ -157,13 +157,6 @@ func reliabilityHandler(cfg Config) http.Handler {
 }
 
 func groupReliabilityHandler(cfg Config) http.Handler {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-		},
-		Timeout: 5 * time.Second,
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		size, err := strconv.Atoi(r.URL.Query().Get("size"))
 		if err != nil {
@@ -171,26 +164,7 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		sIDs, err := sourceIDs(httpClient, cfg, size)
-		if err != nil {
-			log.Printf("unable to get sourceIDs: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
 
-		log.Printf("Running Group Blackbox Test with %d sourceIDs.", len(sIDs))
-
-		client := logcache.NewShardGroupReaderClient(
-			cfg.LogCacheAddr,
-			logcache.WithHTTPClient(
-				logcache.NewOauth2HTTPClient(
-					cfg.UAAAddr,
-					cfg.UAAClient,
-					cfg.UAAClientSecret,
-					logcache.WithOauth2HTTPClient(httpClient),
-				),
-			),
-		)
 		groupUUID, err := uuid.NewV4()
 		if err != nil {
 			log.Printf("unable to create groupUUID: %s", err)
@@ -198,11 +172,10 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 			return
 		}
 		groupName := groupUUID.String()
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		err = client.SetShardGroup(ctx, groupName, sIDs...)
+
+		reader, err := buildGroupReader(size, groupName, cfg)
 		if err != nil {
-			log.Printf("unable to set shard group: %s", err)
+			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -221,7 +194,6 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		time.Sleep(10 * time.Second)
 
 		var receivedCount int
-		reader := client.BuildReader(rand.Uint64())
 		logcache.Walk(
 			context.Background(),
 			groupName,
@@ -250,6 +222,40 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 	})
 }
 
+func buildGroupReader(size int, groupName string, cfg Config) (logcache.Reader, error) {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	sIDs, err := sourceIDs(httpClient, cfg, size)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get sourceIDs: %s", err)
+	}
+
+	client := logcache.NewShardGroupReaderClient(
+		cfg.LogCacheAddr,
+		logcache.WithHTTPClient(
+			logcache.NewOauth2HTTPClient(
+				cfg.UAAAddr,
+				cfg.UAAClient,
+				cfg.UAAClientSecret,
+				logcache.WithOauth2HTTPClient(httpClient),
+			),
+		),
+	)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	err = client.SetShardGroup(ctx, groupName, sIDs...)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set shard group: %s", err)
+	}
+
+	return client.BuildReader(rand.Uint64()), nil
+}
 func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
@@ -321,13 +327,6 @@ func latencyHandler(cfg Config) http.Handler {
 }
 
 func groupLatencyHandler(cfg Config) http.Handler {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-		},
-		Timeout: 5 * time.Second,
-	}
-
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		size, err := strconv.Atoi(r.URL.Query().Get("size"))
 		if err != nil {
@@ -335,27 +334,6 @@ func groupLatencyHandler(cfg Config) http.Handler {
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-
-		sIDs, err := sourceIDs(httpClient, cfg, size)
-		if err != nil {
-			log.Printf("unable to get sourceIDs: %s", err)
-			w.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-
-		log.Printf("Running Group Blackbox Test with %d sourceIDs.", len(sIDs))
-
-		client := logcache.NewShardGroupReaderClient(
-			cfg.LogCacheAddr,
-			logcache.WithHTTPClient(
-				logcache.NewOauth2HTTPClient(
-					cfg.UAAAddr,
-					cfg.UAAClient,
-					cfg.UAAClientSecret,
-					logcache.WithOauth2HTTPClient(httpClient),
-				),
-			),
-		)
 
 		groupUUID, err := uuid.NewV4()
 		if err != nil {
@@ -365,17 +343,13 @@ func groupLatencyHandler(cfg Config) http.Handler {
 		}
 		groupName := groupUUID.String()
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		err = client.SetShardGroup(ctx, groupName, sIDs...)
+		reader, err := buildGroupReader(size, groupName, cfg)
 		if err != nil {
-			log.Printf("unable to set shard group: %s", err)
+			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 
-		reader := client.BuildReader(rand.Uint64())
 		resultData, err := measureLatency(reader, groupName)
 		if err != nil {
 			log.Printf("error getting result data: %s", err)
