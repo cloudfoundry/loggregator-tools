@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -15,6 +16,7 @@ import (
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	uuid "github.com/nu7hatch/gouuid"
 )
 
 type Config struct {
@@ -84,6 +86,8 @@ func handler(cfg Config) http.Handler {
 			latencyHandler(cfg).ServeHTTP(w, r)
 		case "/reliability":
 			reliabilityHandler(cfg).ServeHTTP(w, r)
+		case "/group/reliability":
+			groupReliabilityHandler(cfg).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -129,6 +133,100 @@ func reliabilityHandler(cfg Config) http.Handler {
 			return receivedCount < emitCount
 		},
 			client.Read,
+			logcache.WithWalkStartTime(start),
+			logcache.WithWalkEndTime(end),
+			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
+		)
+
+		result := ReliabilityTestResult{
+			LogsSent:     emitCount,
+			LogsReceived: receivedCount,
+		}
+
+		resultData, err := json.Marshal(&result)
+		if err != nil {
+			log.Printf("failed to marshal test results: %s", err)
+			return
+		}
+
+		w.Write(resultData)
+	})
+}
+
+func groupReliabilityHandler(cfg Config) http.Handler {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		size, err := strconv.Atoi(r.URL.Query().Get("size"))
+		if err != nil {
+			log.Printf("invalid size: %s %s", r.URL.Query().Get("size"), err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		sIDs, err := sourceIDs(httpClient, cfg, size)
+		if err != nil {
+			log.Printf("unable to get sourceIDs: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("Running Group Blackbox Test with %d sourceIDs.", len(sIDs))
+
+		client := logcache.NewShardGroupReaderClient(
+			cfg.LogCacheAddr,
+			logcache.WithHTTPClient(
+				logcache.NewOauth2HTTPClient(
+					cfg.UAAAddr,
+					cfg.UAAClient,
+					cfg.UAAClientSecret,
+					logcache.WithOauth2HTTPClient(httpClient),
+				),
+			),
+		)
+		groupUUID, err := uuid.NewV4()
+		if err != nil {
+			log.Printf("unable to create groupUUID: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		groupName := groupUUID.String()
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		err = client.SetShardGroup(ctx, groupName, sIDs...)
+		if err != nil {
+			log.Printf("unable to set shard group: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		emitCount := 10000
+		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
+
+		start := time.Now()
+		for i := 0; i < emitCount; i++ {
+			log.Printf("%s %d", prefix, i)
+			time.Sleep(time.Millisecond)
+		}
+		end := time.Now()
+
+		// Give the system time to get the envelopes
+		time.Sleep(10 * time.Second)
+
+		var receivedCount int
+		reader := client.BuildReader(rand.Uint64())
+		logcache.Walk(
+			context.Background(),
+			groupName,
+			func(envelopes []*loggregator_v2.Envelope) bool {
+				receivedCount += len(envelopes)
+				return receivedCount < emitCount
+			},
+			reader,
 			logcache.WithWalkStartTime(start),
 			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
@@ -331,4 +429,36 @@ func countMessages(prefix string, envelopes []*loggregator_v2.Envelope) int {
 	}
 
 	return count
+}
+
+func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) {
+	client := logcache.NewClient(
+		cfg.LogCacheAddr,
+		logcache.WithHTTPClient(
+			logcache.NewOauth2HTTPClient(
+				cfg.UAAAddr,
+				cfg.UAAClient,
+				cfg.UAAClientSecret,
+				logcache.WithOauth2HTTPClient(httpClient),
+			),
+		),
+	)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	meta, err := client.Meta(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	sourceIDs := make([]string, 0, size)
+	for k := range meta {
+		if k == cfg.VCapApp.ApplicationID {
+			continue
+		}
+		if len(sourceIDs) < size-1 {
+			sourceIDs = append(sourceIDs, k)
+		}
+	}
+	sourceIDs = append(sourceIDs, cfg.VCapApp.ApplicationID)
+	return sourceIDs, nil
 }
