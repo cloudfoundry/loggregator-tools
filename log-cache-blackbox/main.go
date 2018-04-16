@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -84,6 +85,8 @@ func handler(cfg Config) http.Handler {
 		switch r.URL.Path {
 		case "/":
 			latencyHandler(cfg).ServeHTTP(w, r)
+		case "/group":
+			groupLatencyHandler(cfg).ServeHTTP(w, r)
 		case "/reliability":
 			reliabilityHandler(cfg).ServeHTTP(w, r)
 		case "/group/reliability":
@@ -288,70 +291,163 @@ func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix str
 }
 
 func latencyHandler(cfg Config) http.Handler {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+		},
+		Timeout: 5 * time.Second,
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var queryTimes []time.Duration
-		for j := 0; j < 10; j++ {
-			expectedLog := fmt.Sprintf("Test log - %d", rand.Int63())
-			logStartTime := time.Now()
-			fmt.Println(expectedLog)
+		client := logcache.NewClient(cfg.LogCacheAddr,
+			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+				cfg.UAAAddr,
+				cfg.UAAClient,
+				cfg.UAAClientSecret,
+				logcache.WithOauth2HTTPClient(httpClient),
+			)),
+		)
 
-			for i := 0; i < 100; i++ {
-
-				// Look at 110 pages. This equates to 11000 possible envelopes. The
-				// reliability test emits 10000 envelopes and could be clutter within the
-				// cache.
-				queryDurations, success := consumePages(
-					110,
-					logStartTime.Add(-7500*time.Millisecond),
-					logStartTime.Add(7500*time.Millisecond),
-					cfg,
-					func(envelopes []*loggregator_v2.Envelope) (bool, int64) {
-						return lookForMsg(expectedLog, envelopes)
-					},
-				)
-				queryTimes = append(queryTimes, queryDurations...)
-
-				if success {
-					var queryTimesMs []float64
-					var totalQueryTimes time.Duration
-					for _, qt := range queryTimes {
-						totalQueryTimes += qt
-						queryTimesMs = append(queryTimesMs, float64(qt)/float64(time.Millisecond))
-					}
-
-					avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
-
-					// Success
-					testResults := TestResult{
-						Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
-						QueryTimes:       queryTimesMs,
-						AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
-					}
-
-					resultData, err := json.Marshal(testResults)
-					if err != nil {
-						log.Printf("failed to marshal test results: %s", err)
-						w.WriteHeader(http.StatusInternalServerError)
-						return
-					}
-
-					w.Write(resultData)
-					return
-				}
-			}
+		resultData, err := measureLatency(client.Read, cfg.VCapApp.ApplicationID)
+		if err != nil {
+			log.Printf("error getting result data: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 
-		// Fail...
-		log.Println("Never found the log")
-		w.WriteHeader(http.StatusInternalServerError)
+		w.Write(resultData)
+		return
 	})
 }
 
-func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) ([]time.Duration, bool) {
+func groupLatencyHandler(cfg Config) http.Handler {
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
+		},
+		Timeout: 5 * time.Second,
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		size, err := strconv.Atoi(r.URL.Query().Get("size"))
+		if err != nil {
+			log.Printf("invalid size: %s %s", r.URL.Query().Get("size"), err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		sIDs, err := sourceIDs(httpClient, cfg, size)
+		if err != nil {
+			log.Printf("unable to get sourceIDs: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		log.Printf("Running Group Blackbox Test with %d sourceIDs.", len(sIDs))
+
+		client := logcache.NewShardGroupReaderClient(
+			cfg.LogCacheAddr,
+			logcache.WithHTTPClient(
+				logcache.NewOauth2HTTPClient(
+					cfg.UAAAddr,
+					cfg.UAAClient,
+					cfg.UAAClientSecret,
+					logcache.WithOauth2HTTPClient(httpClient),
+				),
+			),
+		)
+
+		groupUUID, err := uuid.NewV4()
+		if err != nil {
+			log.Printf("unable to create groupUUID: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		groupName := groupUUID.String()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		err = client.SetShardGroup(ctx, groupName, sIDs...)
+		if err != nil {
+			log.Printf("unable to set shard group: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		reader := client.BuildReader(rand.Uint64())
+		resultData, err := measureLatency(reader, groupName)
+		if err != nil {
+			log.Printf("error getting result data: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		w.Write(resultData)
+		return
+	})
+}
+
+func measureLatency(reader logcache.Reader, name string) ([]byte, error) {
+	var queryTimes []time.Duration
+	for j := 0; j < 10; j++ {
+		expectedLog := fmt.Sprintf("Test log - %d", rand.Int63())
+		logStartTime := time.Now()
+		fmt.Println(expectedLog)
+
+		for i := 0; i < 100; i++ {
+
+			// Look at 110 pages. This equates to 11000 possible envelopes. The
+			// reliability test emits 10000 envelopes and could be clutter within the
+			// cache.
+			queryDurations, success := consumePages(
+				110,
+				logStartTime.Add(-7500*time.Millisecond),
+				logStartTime.Add(7500*time.Millisecond),
+				reader,
+				name,
+				func(envelopes []*loggregator_v2.Envelope) (bool, int64) {
+					return lookForMsg(expectedLog, envelopes)
+				},
+			)
+			queryTimes = append(queryTimes, queryDurations...)
+
+			if success {
+				var queryTimesMs []float64
+				var totalQueryTimes time.Duration
+				for _, qt := range queryTimes {
+					totalQueryTimes += qt
+					queryTimesMs = append(queryTimesMs, float64(qt)/float64(time.Millisecond))
+				}
+
+				avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
+
+				// Success
+				testResults := TestResult{
+					Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
+					QueryTimes:       queryTimesMs,
+					AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
+				}
+
+				resultData, err := json.Marshal(testResults)
+				if err != nil {
+					return nil, err
+				}
+
+				return resultData, nil
+			}
+		}
+	}
+
+	// Fail...
+	return nil, errors.New("Never found the log")
+}
+
+func consumePages(pages int, start, end time.Time, reader logcache.Reader, name string, f func([]*loggregator_v2.Envelope) (bool, int64)) ([]time.Duration, bool) {
 	var queryDurations []time.Duration
 
 	for i := 0; i < pages; i++ {
-		queryDuration, last, count, err := consumeTimeRange(start, end, cfg, f)
+		queryDuration, last, count, err := consumeTimeRange(start, end, reader, name, f)
 		if err != nil {
 			log.Println(err)
 			return nil, false
@@ -369,28 +465,11 @@ func consumePages(pages int, start, end time.Time, cfg Config, f func([]*loggreg
 	return queryDurations, false
 }
 
-func consumeTimeRange(start, end time.Time, cfg Config, f func([]*loggregator_v2.Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-	}
-
-	client := logcache.NewClient(cfg.LogCacheAddr,
-		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
-			cfg.UAAAddr,
-			cfg.UAAClient,
-			cfg.UAAClientSecret,
-			logcache.WithOauth2HTTPClient(
-				&http.Client{
-					Transport: tr,
-					Timeout:   5 * time.Second,
-				},
-			))),
-	)
-
+func consumeTimeRange(start, end time.Time, reader logcache.Reader, name string, f func([]*loggregator_v2.Envelope) (bool, int64)) (time.Duration, time.Time, int, error) {
 	queryStart := time.Now()
-	data, err := client.Read(
+	data, err := reader(
 		context.Background(),
-		cfg.VCapApp.ApplicationID,
+		name,
 		start,
 		logcache.WithEndTime(end),
 	)
