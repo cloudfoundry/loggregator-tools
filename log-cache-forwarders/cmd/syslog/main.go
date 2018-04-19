@@ -14,9 +14,7 @@ import (
 	logcache "code.cloudfoundry.org/go-log-cache"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/expvarfilter"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/groupmanager"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/metrics"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/sourceidprovider"
 )
 
 const metricsNamespace = "SyslogForwarder"
@@ -40,25 +38,6 @@ func main() {
 		logcache.WithHTTPClient(newOauth2HTTPClient(cfg)),
 	)
 
-	groupClient := logcache.NewShardGroupReaderClient(
-		cfg.LogCacheHTTPAddr,
-		logcache.WithHTTPClient(newOauth2HTTPClient(cfg)),
-	)
-
-	provider := sourceidprovider.NewRegex(
-		false,
-		cfg.SourceID,
-		client,
-	)
-
-	groupmanager.Start(
-		cfg.GroupName,
-		time.Tick(30*time.Second),
-		provider,
-		groupClient,
-		groupmanager.WithMetrics(m),
-	)
-
 	netConf := egress.NetworkConfig{
 		Keepalive:      cfg.KeepAlive,
 		DialTimeout:    cfg.DialTimeout,
@@ -67,12 +46,11 @@ func main() {
 	}
 	writer := egress.NewWriter(cfg.SourceID, cfg.SourceHostname, cfg.SyslogURL, netConf)
 
-	reader := groupClient.BuildReader(rand.Uint64())
 	logcache.Walk(
 		context.Background(),
-		cfg.GroupName,
+		cfg.SourceID,
 		egress.NewVisitor(writer, m),
-		reader,
+		client.Read,
 		logcache.WithWalkStartTime(time.Now()),
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(250*time.Millisecond)),
 		logcache.WithWalkLogger(log.New(os.Stderr, "", log.LstdFlags)),
