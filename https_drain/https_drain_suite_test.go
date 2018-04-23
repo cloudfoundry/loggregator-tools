@@ -1,13 +1,13 @@
 package main_test
 
 import (
+	"testing"
+
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
-
-	"testing"
 )
 
-func TestHttpDrain(t *testing.T) {
+func TestHttpsDrain(t *testing.T) {
 	RegisterFailHandler(Fail)
-	RunSpecs(t, "HttpDrain Suite")
+	RunSpecs(t, "HttpsDrain Suite")
 }
