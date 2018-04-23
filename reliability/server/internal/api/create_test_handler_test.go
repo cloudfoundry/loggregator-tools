@@ -9,8 +9,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"time"
-	sharedapi "tools/reliability/api"
-	"tools/reliability/server/internal/api"
+
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/server/internal/api"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"

@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"sync"
 
-	sharedapi "tools/reliability/api"
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 
 	"github.com/gorilla/websocket"
 )

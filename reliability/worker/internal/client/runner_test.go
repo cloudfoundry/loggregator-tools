@@ -2,10 +2,10 @@ package client_test
 
 import (
 	"time"
-	"tools/reliability/worker/internal/client"
-	"tools/reliability/worker/internal/reporter"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
-	sharedapi "tools/reliability/api"
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 
 	"github.com/cloudfoundry/sonde-go/events"
 	"github.com/golang/protobuf/proto"

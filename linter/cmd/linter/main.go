@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"path"
-	"tools/linter"
+	"code.cloudfoundry.org/loggregator-tools/linter"
 
 	"github.com/kisielk/gotool"
 )

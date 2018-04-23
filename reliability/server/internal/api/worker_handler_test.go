@@ -1,10 +1,10 @@
 package api_test
 
 import (
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/server/internal/api"
 	"net/http/httptest"
 	"strings"
-	sharedapi "tools/reliability/api"
-	"tools/reliability/server/internal/api"
 
 	"github.com/gorilla/websocket"
 

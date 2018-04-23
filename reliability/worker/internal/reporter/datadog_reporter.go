@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
-	sharedapi "tools/reliability/api"
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 )
 
 type HTTP interface {

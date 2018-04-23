@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"tools/reliability/worker/internal/client"
-	"tools/reliability/worker/internal/reporter"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
 	"github.com/cloudfoundry/noaa/consumer"
 )

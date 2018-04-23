@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	sharedapi "tools/reliability/api"
-	"tools/reliability/worker/internal/reporter"
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
 	"github.com/cloudfoundry/sonde-go/events"
 )

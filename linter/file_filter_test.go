@@ -1,7 +1,7 @@
 package linter_test
 
 import (
-	"tools/linter"
+	"code.cloudfoundry.org/loggregator-tools/linter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

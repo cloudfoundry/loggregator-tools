@@ -7,7 +7,8 @@ import (
 	"log"
 	"net/http"
 	"time"
-	sharedapi "tools/reliability/api"
+
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 )
 
 // Runner tells the children to run tests.

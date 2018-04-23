@@ -6,8 +6,8 @@ import (
 	"net"
 	"net/http"
 	"sync/atomic"
-	sharedapi "tools/reliability/api"
-	"tools/reliability/worker/internal/client"
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
 
 	"github.com/gorilla/websocket"
 

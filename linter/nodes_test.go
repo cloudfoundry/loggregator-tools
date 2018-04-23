@@ -4,7 +4,7 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"tools/linter"
+	"code.cloudfoundry.org/loggregator-tools/linter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"

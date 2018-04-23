@@ -5,7 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"time"
-	"tools/reliability/server/internal/api"
+
+	"code.cloudfoundry.org/loggregator-tools/reliability/server/internal/api"
 
 	"github.com/posener/wstest"
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	"tools/reliability/server/internal/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/server/internal/api"
 )
 
 func main() {

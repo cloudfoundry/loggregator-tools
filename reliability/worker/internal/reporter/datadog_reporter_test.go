@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-	"tools/reliability/worker/internal/reporter"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
