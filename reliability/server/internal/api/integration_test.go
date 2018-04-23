@@ -48,6 +48,16 @@ func attachWorker(workerHandler http.Handler) func() {
 	d := wstest.NewDialer(workerHandler)
 	c, _, err := d.Dial("ws://localhost:8080/ws", nil)
 	Expect(err).ToNot(HaveOccurred())
+
+	go func() {
+		for {
+			_, _, err := c.ReadMessage()
+			if err != nil {
+				break
+			}
+		}
+	}()
+
 	return func() {
 		c.Close()
 	}
