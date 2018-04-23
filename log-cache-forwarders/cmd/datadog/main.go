@@ -158,6 +158,6 @@ func toDataPoint(x int64, y float64) []datadog.DataPoint {
 	t := time.Unix(0, x)
 	tf := float64(t.Unix())
 	return []datadog.DataPoint{
-		[2]float64{tf, y},
+		[2]*float64{&tf, &y},
 	}
 }
