@@ -23,14 +23,14 @@ function hammer_url {
 function establish_logs_stream {
     checkpoint "Starting App Logs Stream"
 
-    cf logs "$(drainspinner_app_name)" > output.txt 1>&1 &
+    cf logs "$(drainspinner_app_name)" | grep "$(test_uuid)" > output.txt 1>&1 &
     local wait=10
     echo "sleeping for ${wait}s to wait for log stream to be established"
     sleep "$wait"
 }
 
 function hammer {
-    checkpoint "Writing messages"
+    checkpoint "Writing messages for $(test_uuid)"
 
     curl "$(hammer_url)" &> /dev/null
 
