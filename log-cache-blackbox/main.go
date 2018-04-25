@@ -259,8 +259,7 @@ func buildGroupReader(ctx context.Context, size int, groupName string, cfg Confi
 		go func(sID string) {
 			ticker := time.NewTicker(time.Second)
 			for {
-				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-				defer cancel()
+				ctx, _ := context.WithTimeout(ctx, 10*time.Second)
 				err = client.SetShardGroup(ctx, groupName, sID)
 				if err != nil {
 					log.Printf("unable to set shard group: %s", err)
