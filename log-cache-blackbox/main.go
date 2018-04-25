@@ -105,6 +105,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 
 		start := time.Now()
 		for i := 0; i < emitCount; i++ {
+			// TODO: filter by prefix???
 			log.Printf("%s %d", prefix, i)
 			time.Sleep(time.Millisecond)
 		}
@@ -196,11 +197,16 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		time.Sleep(10 * time.Second)
 
 		var receivedCount int
+		walkCtx, _ := context.WithTimeout(ctx, 2*time.Minute)
 		logcache.Walk(
-			ctx,
+			walkCtx,
 			groupName,
 			func(envelopes []*loggregator_v2.Envelope) bool {
-				receivedCount += len(envelopes)
+				for _, e := range envelopes {
+					if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
+						receivedCount++
+					}
+				}
 				return receivedCount < emitCount
 			},
 			reader,
@@ -271,45 +277,6 @@ func buildGroupReader(ctx context.Context, size int, groupName string, cfg Confi
 	}
 
 	return client.BuildReader(rand.Uint64()), nil
-}
-func waitForEnvelopes(ctx context.Context, cfg Config, emitCount int, prefix string) int {
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-	}
-
-	client := logcache.NewClient(cfg.LogCacheAddr,
-		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
-			cfg.UAAAddr,
-			cfg.UAAClient,
-			cfg.UAAClientSecret,
-			logcache.WithOauth2HTTPClient(
-				&http.Client{
-					Transport: tr,
-					Timeout:   5 * time.Second,
-				},
-			))),
-	)
-
-	var receivedCount int
-	for {
-		select {
-		case <-ctx.Done():
-			return receivedCount
-		default:
-			data, err := client.Read(context.Background(), cfg.VCapApp.ApplicationID, time.Unix(0, 0))
-			if err != nil {
-				log.Printf("error while reading: %s", err)
-				continue
-			}
-
-			receivedCount = countMessages(prefix, data)
-			if receivedCount == emitCount {
-				return receivedCount
-			}
-		}
-	}
-
-	return receivedCount
 }
 
 func latencyHandler(cfg Config) http.Handler {
@@ -489,17 +456,6 @@ func lookForMsg(msg string, envelopes []*loggregator_v2.Envelope) (bool, int64) 
 	}
 
 	return false, last
-}
-
-func countMessages(prefix string, envelopes []*loggregator_v2.Envelope) int {
-	var count int
-	for _, e := range envelopes {
-		if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
-			count++
-		}
-	}
-
-	return count
 }
 
 func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) {
