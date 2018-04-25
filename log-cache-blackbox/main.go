@@ -109,7 +109,6 @@ func reliabilityHandler(cfg Config) http.Handler {
 			log.Printf("%s %d", prefix, i)
 			time.Sleep(time.Millisecond)
 		}
-		end := time.Now()
 
 		// Give the system time to get the envelopes
 		time.Sleep(10 * time.Second)
@@ -132,14 +131,21 @@ func reliabilityHandler(cfg Config) http.Handler {
 		)
 
 		var receivedCount int
-		logcache.Walk(context.Background(), cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
-			receivedCount += len(envelopes)
+
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+
+		logcache.Walk(ctx, cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
+			for _, e := range envelopes {
+				if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
+					receivedCount++
+				}
+			}
 			return receivedCount < emitCount
 		},
 			client.Read,
-			logcache.WithWalkStartTime(start),
-			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
+			logcache.WithWalkStartTime(start),
 		)
 
 		result := ReliabilityTestResult{
@@ -187,14 +193,15 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
 
 		start := time.Now()
-		for i := 0; i < emitCount; i++ {
-			log.Printf("%s %d", prefix, i)
-			time.Sleep(time.Millisecond)
-		}
-		end := time.Now()
 
-		// Give the system time to get the envelopes
-		time.Sleep(10 * time.Second)
+		// do writes on a delay
+		go func() {
+			time.Sleep(3 * time.Second)
+			for i := 0; i < emitCount; i++ {
+				log.Printf("%s %d", prefix, i)
+				time.Sleep(time.Millisecond)
+			}
+		}()
 
 		var receivedCount int
 		walkCtx, _ := context.WithTimeout(ctx, 2*time.Minute)
@@ -211,7 +218,6 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 			},
 			reader,
 			logcache.WithWalkStartTime(start),
-			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
 		)
 
