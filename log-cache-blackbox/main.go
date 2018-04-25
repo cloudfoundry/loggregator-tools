@@ -173,7 +173,9 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		}
 		groupName := groupUUID.String()
 
-		reader, err := buildGroupReader(size, groupName, cfg)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		reader, err := buildGroupReader(ctx, size, groupName, cfg)
 		if err != nil {
 			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -195,7 +197,7 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 
 		var receivedCount int
 		logcache.Walk(
-			context.Background(),
+			ctx,
 			groupName,
 			func(envelopes []*loggregator_v2.Envelope) bool {
 				receivedCount += len(envelopes)
@@ -222,7 +224,7 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 	})
 }
 
-func buildGroupReader(size int, groupName string, cfg Config) (logcache.Reader, error) {
+func buildGroupReader(ctx context.Context, size int, groupName string, cfg Config) (logcache.Reader, error) {
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
@@ -247,11 +249,25 @@ func buildGroupReader(size int, groupName string, cfg Config) (logcache.Reader, 
 		),
 	)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.SetShardGroup(ctx, groupName, sIDs...)
-	if err != nil {
-		return nil, fmt.Errorf("unable to set shard group: %s", err)
+	for _, sID := range sIDs {
+		go func(sID string) {
+			ticker := time.NewTicker(time.Second)
+			for {
+				ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+				defer cancel()
+				err = client.SetShardGroup(ctx, groupName, sID)
+				if err != nil {
+					log.Printf("unable to set shard group: %s", err)
+				}
+
+				select {
+				case <-ctx.Done():
+					return
+				case <-ticker.C:
+					continue
+				}
+			}
+		}(sID)
 	}
 
 	return client.BuildReader(rand.Uint64()), nil
@@ -343,7 +359,9 @@ func groupLatencyHandler(cfg Config) http.Handler {
 		}
 		groupName := groupUUID.String()
 
-		reader, err := buildGroupReader(size, groupName, cfg)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		reader, err := buildGroupReader(ctx, size, groupName, cfg)
 		if err != nil {
 			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
