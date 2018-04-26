@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"math/rand"
 	"net/http"
@@ -72,7 +74,13 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 		}
 		groupName := groupUUID.String()
 
-		// prime
+		primeCtx, _ := context.WithTimeout(context.Background(), time.Minute)
+		err = primeGroup(primeCtx, groupName, httpClient)
+		if err != nil {
+			log.Printf("unable to prime for group: %s: %s", groupName, err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
@@ -213,4 +221,48 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 		log.Printf("Asked for %d source IDs but only found %d", size, len(sourceIDs))
 	}
 	return sourceIDs, nil
+}
+
+func primeGroup(ctx context.Context, groupName string, httpClient *http.Client) error {
+	primerMessage := fmt.Sprintf("prime %s %d", groupName, time.Now().UnixNano())
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				log.Println(primerMessage)
+			}
+			time.Sleep(500 * time.Millisecond)
+		}
+	}()
+
+	for {
+		req, err := http.NewRequest("GET", "/v1/shard_group/"+groupName, nil)
+		if err != nil {
+			return fmt.Errorf("failed to build request to log-cache for group read: %s", err)
+		}
+
+		resp, err := httpClient.Do(req)
+		if err != nil {
+			return fmt.Errorf("failed to request to log-cache for group read: %s", err)
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("received status code %d from group reader", resp.StatusCode)
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return fmt.Errorf("failed to read response body: %s", err)
+		}
+		if bytes.Contains(body, []byte(primerMessage)) {
+			log.Println("group reader primed")
+			return nil
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+
+	return nil
 }
