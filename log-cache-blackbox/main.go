@@ -9,6 +9,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -105,7 +106,6 @@ func reliabilityHandler(cfg Config) http.Handler {
 
 		start := time.Now()
 		for i := 0; i < emitCount; i++ {
-			// TODO: filter by prefix???
 			log.Printf("%s %d", prefix, i)
 			time.Sleep(time.Millisecond)
 		}
@@ -133,7 +133,11 @@ func reliabilityHandler(cfg Config) http.Handler {
 
 		var receivedCount int
 		logcache.Walk(context.Background(), cfg.VCapApp.ApplicationID, func(envelopes []*loggregator_v2.Envelope) bool {
-			receivedCount += len(envelopes)
+			for _, e := range envelopes {
+				if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
+					receivedCount++
+				}
+			}
 			return receivedCount < emitCount
 		},
 			client.Read,
@@ -187,17 +191,19 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
 
 		start := time.Now()
-		for i := 0; i < emitCount; i++ {
-			log.Printf("%s %d", prefix, i)
-			time.Sleep(time.Millisecond)
-		}
-		end := time.Now()
+		go func() {
+			// Give the system time to get the envelopes
+			time.Sleep(20 * time.Second)
 
-		// Give the system time to get the envelopes
-		time.Sleep(10 * time.Second)
+			for i := 0; i < emitCount; i++ {
+				log.Printf("%s %d", prefix, i)
+				time.Sleep(time.Millisecond)
+			}
+		}()
 
 		var receivedCount int
-		walkCtx, _ := context.WithTimeout(ctx, 2*time.Minute)
+		walkCtx, _ := context.WithTimeout(ctx, 40*time.Second)
+		log.Printf("Starting walk...")
 		logcache.Walk(
 			walkCtx,
 			groupName,
@@ -211,8 +217,8 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 			},
 			reader,
 			logcache.WithWalkStartTime(start),
-			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
+			logcache.WithWalkLogger(log.New(os.Stderr, "[WALK]", 0)),
 		)
 
 		result := ReliabilityTestResult{
