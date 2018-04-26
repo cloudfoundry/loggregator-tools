@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,7 +13,7 @@ import (
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 )
 
-func reliabilityHandler(cfg Config) http.Handler {
+func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		emitCount := 10000
 		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
@@ -29,21 +28,12 @@ func reliabilityHandler(cfg Config) http.Handler {
 		// Give the system time to get the envelopes
 		time.Sleep(10 * time.Second)
 
-		tr := &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-		}
-
 		client := logcache.NewClient(cfg.LogCacheAddr,
 			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
 				cfg.UAAClient,
 				cfg.UAAClientSecret,
-				logcache.WithOauth2HTTPClient(
-					&http.Client{
-						Transport: tr,
-						Timeout:   5 * time.Second,
-					},
-				))),
+				logcache.WithOauth2HTTPClient(httpClient))),
 		)
 
 		var receivedCount int
@@ -76,14 +66,7 @@ func reliabilityHandler(cfg Config) http.Handler {
 	})
 }
 
-func latencyHandler(cfg Config) http.Handler {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-		},
-		Timeout: 5 * time.Second,
-	}
-
+func latencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		client := logcache.NewClient(cfg.LogCacheAddr,
 			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(

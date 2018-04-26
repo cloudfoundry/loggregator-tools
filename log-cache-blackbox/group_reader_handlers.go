@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -18,7 +17,7 @@ import (
 	uuid "github.com/nu7hatch/gouuid"
 )
 
-func groupLatencyHandler(cfg Config) http.Handler {
+func groupLatencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		size, err := strconv.Atoi(r.URL.Query().Get("size"))
 		if err != nil {
@@ -37,7 +36,7 @@ func groupLatencyHandler(cfg Config) http.Handler {
 
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
-		reader, err := buildGroupReader(ctx, size, groupName, cfg)
+		reader, err := buildGroupReader(ctx, size, groupName, cfg, httpClient)
 		if err != nil {
 			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -56,7 +55,7 @@ func groupLatencyHandler(cfg Config) http.Handler {
 	})
 }
 
-func groupReliabilityHandler(cfg Config) http.Handler {
+func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		size, err := strconv.Atoi(r.URL.Query().Get("size"))
 		if err != nil {
@@ -78,7 +77,7 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 		ctx, cancel := context.WithCancel(context.Background())
 		defer cancel()
 
-		reader, err := buildGroupReader(ctx, size, groupName, cfg)
+		reader, err := buildGroupReader(ctx, size, groupName, cfg, httpClient)
 		if err != nil {
 			log.Printf("Unable to create group reader: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -134,14 +133,13 @@ func groupReliabilityHandler(cfg Config) http.Handler {
 	})
 }
 
-func buildGroupReader(ctx context.Context, size int, groupName string, cfg Config) (logcache.Reader, error) {
-	httpClient := &http.Client{
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: cfg.SkipSSLValidation},
-		},
-		Timeout: 5 * time.Second,
-	}
-
+func buildGroupReader(
+	ctx context.Context,
+	size int,
+	groupName string,
+	cfg Config,
+	httpClient *http.Client,
+) (logcache.Reader, error) {
 	sIDs, err := sourceIDs(httpClient, cfg, size)
 	if err != nil {
 		return nil, fmt.Errorf("unable to get sourceIDs: %s", err)

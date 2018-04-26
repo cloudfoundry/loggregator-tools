@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"log"
 	"net/http"
 	"sync/atomic"
+	"time"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 )
@@ -27,6 +29,15 @@ func main() {
 func handler(cfg Config) http.Handler {
 	var testRunning int64
 
+	httpClient := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: cfg.SkipSSLValidation,
+			},
+		},
+		Timeout: 5 * time.Second,
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			w.WriteHeader(http.StatusMethodNotAllowed)
@@ -41,13 +52,13 @@ func handler(cfg Config) http.Handler {
 
 		switch r.URL.Path {
 		case "/":
-			latencyHandler(cfg).ServeHTTP(w, r)
-		case "/group":
-			groupLatencyHandler(cfg).ServeHTTP(w, r)
+			latencyHandler(cfg, httpClient).ServeHTTP(w, r)
 		case "/reliability":
-			reliabilityHandler(cfg).ServeHTTP(w, r)
+			reliabilityHandler(cfg, httpClient).ServeHTTP(w, r)
+		case "/group":
+			groupLatencyHandler(cfg, httpClient).ServeHTTP(w, r)
 		case "/group/reliability":
-			groupReliabilityHandler(cfg).ServeHTTP(w, r)
+			groupReliabilityHandler(cfg, httpClient).ServeHTTP(w, r)
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			return
