@@ -96,15 +96,11 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 		prefix := fmt.Sprintf("%d - ", time.Now().UnixNano())
 
 		start := time.Now()
-		go func() {
-			// Give the system time to get the envelopes
-			time.Sleep(20 * time.Second)
-
-			for i := 0; i < emitCount; i++ {
-				log.Printf("%s %d", prefix, i)
-				time.Sleep(time.Millisecond)
-			}
-		}()
+		for i := 0; i < emitCount; i++ {
+			log.Printf("%s %d", prefix, i)
+			time.Sleep(time.Millisecond)
+		}
+		end := time.Now()
 
 		var receivedCount int
 		walkCtx, _ := context.WithTimeout(ctx, 40*time.Second)
@@ -122,6 +118,7 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 			},
 			reader,
 			logcache.WithWalkStartTime(start),
+			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewRetryBackoff(50*time.Millisecond, 100)),
 			logcache.WithWalkLogger(log.New(os.Stderr, "[WALK]", 0)),
 		)
