@@ -162,25 +162,25 @@ func buildGroupReader(
 		),
 	)
 
-	for _, sID := range sIDs {
-		go func(sID string) {
-			ticker := time.NewTicker(time.Second)
-			for {
-				ctx, _ := context.WithTimeout(ctx, 10*time.Second)
+	go func() {
+		ticker := time.NewTicker(10 * time.Second)
+		for {
+			for _, sID := range sIDs {
+				ctx, _ := context.WithTimeout(ctx, time.Second)
 				err = client.SetShardGroup(ctx, groupName, sID)
 				if err != nil {
 					log.Printf("unable to set shard group: %s", err)
 				}
-
-				select {
-				case <-ctx.Done():
-					return
-				case <-ticker.C:
-					continue
-				}
 			}
-		}(sID)
-	}
+
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				continue
+			}
+		}
+	}()
 
 	return client.BuildReader(rand.Uint64()), nil
 }
