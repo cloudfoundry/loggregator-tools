@@ -211,5 +211,8 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 		}
 	}
 	sourceIDs = append(sourceIDs, cfg.VCapApp.ApplicationID)
+	if len(sourceIDs) != size {
+		log.Printf("Asked for %d source IDs but only found %d", size, len(sourceIDs))
+	}
 	return sourceIDs, nil
 }
