@@ -42,7 +42,7 @@ func (v *VCapApp) UnmarshalEnv(jsonData string) error {
 	return json.Unmarshal([]byte(jsonData), &v)
 }
 
-type TestResult struct {
+type LatencyTestResult struct {
 	Latency          float64   `json:"latency"`
 	QueryTimes       []float64 `json:"queryTime"`
 	AverageQueryTime float64   `json:"averageQueryTime"`
@@ -387,7 +387,7 @@ func measureLatency(reader logcache.Reader, name string) ([]byte, error) {
 				avgQT := int64(totalQueryTimes) / int64(len(queryTimes))
 
 				// Success
-				testResults := TestResult{
+				testResults := LatencyTestResult{
 					Latency:          float64(time.Since(logStartTime)) / float64(time.Millisecond),
 					QueryTimes:       queryTimesMs,
 					AverageQueryTime: float64(avgQT) / float64(time.Millisecond),
