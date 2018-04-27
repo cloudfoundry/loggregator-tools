@@ -22,6 +22,13 @@ func groupLatencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 		defer cancel()
 		client := buildGroupClient(cfg, httpClient)
 
+		size, err := strconv.Atoi(r.URL.Query().Get("size"))
+		if err != nil {
+			log.Printf("invalid size: %s %s", r.URL.Query().Get("size"), err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
 		groupUUID, err := uuid.NewV4()
 		if err != nil {
 			log.Printf("unable to create groupUUID: %s", err)
@@ -29,6 +36,14 @@ func groupLatencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 			return
 		}
 		groupName := groupUUID.String()
+
+		sIDs, err := sourceIDs(httpClient, cfg, size)
+		if err != nil {
+			log.Printf("unable to get sourceIDs: %s", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		go maintainGroup(ctx, groupName, sIDs, client)
 
 		latCtx, _ := context.WithTimeout(ctx, 10*time.Second)
 		resultData, err := measureLatency(
