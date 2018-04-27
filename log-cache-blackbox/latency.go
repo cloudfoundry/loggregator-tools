@@ -19,14 +19,25 @@ type LatencyTestResult struct {
 	AverageQueryTime float64   `json:"averageQueryTime"`
 }
 
-func measureLatency(reader logcache.Reader, name string) ([]byte, error) {
+func measureLatency(ctx context.Context, reader logcache.Reader, name string) ([]byte, error) {
 	var queryTimes []time.Duration
 	for j := 0; j < 10; j++ {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		expectedLog := fmt.Sprintf("Test log - %d", rand.Int63())
 		logStartTime := time.Now()
 		fmt.Println(expectedLog)
 
 		for i := 0; i < 100; i++ {
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			default:
+			}
 
 			// Look at 110 pages. This equates to 11000 possible envelopes. The
 			// reliability test emits 10000 envelopes and could be clutter within the
