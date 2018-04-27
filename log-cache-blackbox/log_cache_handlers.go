@@ -28,7 +28,7 @@ func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 		// Give the system time to get the envelopes
 		time.Sleep(10 * time.Second)
 
-		client := logcache.NewClient(cfg.LogCacheAddr,
+		client := logcache.NewClient(cfg.LogCacheURL.String(),
 			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
 				cfg.UAAClient,
@@ -68,7 +68,7 @@ func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 
 func latencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		client := logcache.NewClient(cfg.LogCacheAddr,
+		client := logcache.NewClient(cfg.LogCacheURL.String(),
 			logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
 				cfg.UAAClient,

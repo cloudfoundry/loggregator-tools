@@ -1,9 +1,12 @@
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"net/url"
+)
 
 type Config struct {
-	LogCacheAddr string `env:"LOG_CACHE_ADDR,   required"`
+	LogCacheURL *url.URL `env:"LOG_CACHE_URL,   required"`
 
 	Port    int     `env:"PORT,             required"`
 	VCapApp VCapApp `env:"VCAP_APPLICATION, required"`

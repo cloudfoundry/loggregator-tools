@@ -151,7 +151,7 @@ func buildGroupReader(
 	}
 
 	client := logcache.NewShardGroupReaderClient(
-		cfg.LogCacheAddr,
+		cfg.LogCacheURL.String(),
 		logcache.WithHTTPClient(
 			logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
@@ -187,7 +187,7 @@ func buildGroupReader(
 
 func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) {
 	client := logcache.NewClient(
-		cfg.LogCacheAddr,
+		cfg.LogCacheURL.String(),
 		logcache.WithHTTPClient(
 			logcache.NewOauth2HTTPClient(
 				cfg.UAAAddr,
