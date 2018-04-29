@@ -7,6 +7,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -209,13 +210,26 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 		return nil, err
 	}
 
-	sourceIDs := make([]string, 0, size)
-	for k := range meta {
+	cs := make([]count, 0)
+	for k, v := range meta {
 		if k == cfg.VCapApp.ApplicationID {
 			continue
 		}
+		cs = append(cs, count{
+			count:    int(v.Count),
+			sourceID: k,
+		})
+	}
+
+	sort.Sort(counts(cs))
+
+	sourceIDs := make([]string, 0, size)
+	for _, k := range cs {
+		if k.sourceID == cfg.VCapApp.ApplicationID {
+			continue
+		}
 		if len(sourceIDs) < size-1 {
-			sourceIDs = append(sourceIDs, k)
+			sourceIDs = append(sourceIDs, k.sourceID)
 		}
 	}
 	sourceIDs = append(sourceIDs, cfg.VCapApp.ApplicationID)
@@ -223,4 +237,25 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 		return nil, fmt.Errorf("Asked for %d source IDs but only found %d", size, len(sourceIDs))
 	}
 	return sourceIDs, nil
+}
+
+type count struct {
+	sourceID string
+	count    int
+}
+
+type counts []count
+
+func (c counts) Len() int {
+	return len(c)
+}
+
+func (c counts) Swap(i, j int) {
+	t := c[i]
+	c[i] = c[j]
+	c[j] = t
+}
+
+func (c counts) Less(i, j int) bool {
+	return c[i].count < c[j].count
 }
