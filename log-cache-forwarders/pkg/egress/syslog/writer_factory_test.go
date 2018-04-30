@@ -13,7 +13,7 @@ var _ = Describe("WriterFactory", func() {
 		url, err := url.Parse("https://the-syslog-endpoint.com")
 		Expect(err).ToNot(HaveOccurred())
 
-		writer := syslog.NewWriter("source-id", "source-host", url, syslog.NetworkConfig{})
+		writer := syslog.NewWriter("source-host", url, syslog.NetworkConfig{})
 
 		_, ok := writer.(*syslog.HTTPSWriter)
 		Expect(ok).To(BeTrue())
@@ -23,7 +23,7 @@ var _ = Describe("WriterFactory", func() {
 		url, err := url.Parse("syslog://the-syslog-endpoint.com")
 		Expect(err).ToNot(HaveOccurred())
 
-		writer := syslog.NewWriter("source-id", "source-host", url, syslog.NetworkConfig{})
+		writer := syslog.NewWriter("source-host", url, syslog.NetworkConfig{})
 
 		_, ok := writer.(*syslog.TCPWriter)
 		Expect(ok).To(BeTrue())

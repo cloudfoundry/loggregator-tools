@@ -10,7 +10,6 @@ import (
 // identified by URL.
 type URLBinding struct {
 	Context  context.Context
-	AppID    string
 	Hostname string
 	URL      *url.URL
 }

@@ -64,7 +64,7 @@ type RetryWriter struct {
 // Write will retry writes unitl maxRetries has been reached.
 func (r *RetryWriter) Write(e *loggregator_v2.Envelope) error {
 	logMsgOption := loggregator.WithAppInfo(
-		r.binding.AppID,
+		e.SourceId,
 		"LGR",
 		r.sourceIndex,
 	)

@@ -19,10 +19,9 @@ type WriteCloser interface {
 	io.Closer
 }
 
-func NewWriter(sourceID, sourceHost string, url *url.URL, netConf NetworkConfig) WriteCloser {
+func NewWriter(sourceHost string, url *url.URL, netConf NetworkConfig) WriteCloser {
 	binding := URLBinding{
 		URL:      url,
-		AppID:    sourceID,
 		Hostname: sourceHost,
 	}
 

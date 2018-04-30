@@ -44,7 +44,7 @@ func main() {
 		WriteTimeout:   cfg.IOTimeout,
 		SkipCertVerify: cfg.SkipCertVerify,
 	}
-	writer := egress.NewWriter(cfg.SourceID, cfg.SourceHostname, cfg.SyslogURL, netConf)
+	writer := egress.NewWriter(cfg.SourceHostname, cfg.SyslogURL, netConf)
 
 	logcache.Walk(
 		context.Background(),

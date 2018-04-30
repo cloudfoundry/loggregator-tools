@@ -95,14 +95,15 @@ var _ = Describe("Retry Writer", func() {
 				writeErr:       errors.New("write error"),
 				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
-					AppID:   "some-app-id",
 					Context: context.Background(),
 				},
 			}
 			logClient := newSpyLogClient()
 			r := buildRetryWriter(writeCloser, 2, 0, logClient, "1234")
 
-			_ = r.Write(&v2.Envelope{})
+			_ = r.Write(&v2.Envelope{
+				SourceId: "some-app-id",
+			})
 
 			Expect(logClient.message()).To(ContainElement("Syslog Drain: Error when writing. Backing off for 0s."))
 			Expect(logClient.appID()).To(ContainElement("some-app-id"))

@@ -24,7 +24,6 @@ type NetworkConfig struct {
 
 type HTTPSWriter struct {
 	hostname string
-	appID    string
 	url      *url.URL
 	client   *http.Client
 }
@@ -38,14 +37,13 @@ func NewHTTPSWriter(
 
 	return &HTTPSWriter{
 		url:      binding.URL,
-		appID:    binding.AppID,
 		hostname: binding.Hostname,
 		client:   client,
 	}
 }
 
 func (w *HTTPSWriter) Write(env *loggregator_v2.Envelope) error {
-	msgs := generateRFC5424Messages(env, w.hostname, w.appID)
+	msgs := generateRFC5424Messages(env, w.hostname, env.SourceId)
 	for _, msg := range msgs {
 		b, err := msg.MarshalBinary()
 		if err != nil {

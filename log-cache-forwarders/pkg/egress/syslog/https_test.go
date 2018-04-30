@@ -24,7 +24,7 @@ var _ = Describe("HTTPWriter", func() {
 
 	It("errors when ssl validation is enabled", func() {
 		drain := newMockOKDrain()
-		b := buildURLBinding(drain.URL, "test-app-id", "test-hostname")
+		b := buildURLBinding(drain.URL, "test-hostname")
 		netConf.SkipCertVerify = false
 
 		writer := syslog.NewHTTPSWriter(
@@ -41,7 +41,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id-012345678901234567890012345678901234567890",
 			"test-hostname",
 		)
 		writer := syslog.NewHTTPSWriter(
@@ -50,6 +49,8 @@ var _ = Describe("HTTPWriter", func() {
 		)
 
 		env := buildLogEnvelope("APP", "1", "just a test", loggregator_v2.Log_OUT)
+		env.SourceId = "test-app-id-012345678901234567890012345678901234567890"
+
 		Expect(writer.Write(env)).To(HaveOccurred())
 	})
 
@@ -58,7 +59,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -76,7 +76,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -127,7 +126,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -173,7 +171,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -205,7 +202,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -223,7 +219,6 @@ var _ = Describe("HTTPWriter", func() {
 
 		b := buildURLBinding(
 			drain.URL,
-			"test-app-id",
 			"test-hostname",
 		)
 
@@ -273,12 +268,11 @@ func newMockDrain(status int) *SpyDrain {
 	return drain
 }
 
-func buildURLBinding(u, appID, hostname string) *syslog.URLBinding {
+func buildURLBinding(u, hostname string) *syslog.URLBinding {
 	parsedURL, _ := url.Parse(u)
 
 	return &syslog.URLBinding{
 		URL:      parsedURL,
-		AppID:    appID,
 		Hostname: hostname,
 	}
 }

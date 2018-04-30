@@ -30,7 +30,6 @@ type DialFunc func(addr string) (net.Conn, error)
 // goroutine that calls `.Write()` should be the one that calls `.Close()`.
 type TCPWriter struct {
 	url          *url.URL
-	appID        string
 	hostname     string
 	dialFunc     DialFunc
 	writeTimeout time.Duration
@@ -53,7 +52,6 @@ func NewTCPWriter(
 
 	w := &TCPWriter{
 		url:          binding.URL,
-		appID:        binding.AppID,
 		hostname:     binding.Hostname,
 		writeTimeout: netConf.WriteTimeout,
 		dialFunc:     df,
@@ -185,7 +183,7 @@ func generateRFC5424Messages(
 
 // Write writes an envelope to the syslog drain connection.
 func (w *TCPWriter) Write(env *loggregator_v2.Envelope) error {
-	msgs := generateRFC5424Messages(env, w.hostname, w.appID)
+	msgs := generateRFC5424Messages(env, w.hostname, env.SourceId)
 	conn, err := w.connection()
 	if err != nil {
 		return err
