@@ -230,6 +230,7 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 		}
 		if len(sourceIDs) < size-1 {
 			sourceIDs = append(sourceIDs, k.sourceID)
+			log.Printf("Using %s with count %d", k.sourceID, k.count)
 		}
 	}
 	sourceIDs = append(sourceIDs, cfg.VCapApp.ApplicationID)
