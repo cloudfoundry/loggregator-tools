@@ -115,7 +115,7 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 			receivedCount    int
 			badReceivedCount int
 		)
-		walkCtx, _ := context.WithTimeout(ctx, 40*time.Second)
+		walkCtx, _ := context.WithTimeout(ctx, 120*time.Second)
 		logcache.Walk(
 			walkCtx,
 			groupName,
