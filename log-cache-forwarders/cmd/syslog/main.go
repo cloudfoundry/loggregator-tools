@@ -72,6 +72,6 @@ func newOauth2HTTPClient(cfg Config) *logcache.Oauth2HTTPClient {
 		cfg.ClientID,
 		cfg.ClientSecret,
 		logcache.WithOauth2HTTPClient(client),
-		logcache.WithUser(cfg.Username, cfg.Password),
+		logcache.WithOauth2HTTPUser(cfg.Username, cfg.Password),
 	)
 }
