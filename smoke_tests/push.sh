@@ -65,8 +65,10 @@ function restart_spinner_app {
 
 function push_counter_app {
     checkpoint "Pushing Counter App"
+    mkdir -p $GOPATH/src/code.cloudfoundry.org/loggregator-tools/counter
+    cp -R ../counter/. $GOPATH/src/code.cloudfoundry.org/loggregator-tools/counter
 
-    pushd ../counter
+    pushd $GOPATH/src/code.cloudfoundry.org/loggregator-tools/counter
         if ! [ -e ./counter ]; then
             GOOS=linux go build
         fi
