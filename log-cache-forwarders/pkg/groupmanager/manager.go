@@ -74,8 +74,10 @@ func (m *Manager) run() {
 
 func (m *Manager) updateSourceIDs(sourceIDs []string) {
 	start := time.Now()
-	if err := m.gu.SetShardGroup(context.Background(), m.groupName, sourceIDs...); err != nil {
-		log.Printf("failed to set shard group: %s", err)
+	for _, sid := range sourceIDs {
+		if err := m.gu.SetShardGroup(context.Background(), m.groupName, sid); err != nil {
+			log.Printf("failed to set shard group: %s", err)
+		}
 	}
 	m.sourceIDMetric(float64(len(sourceIDs)))
 	log.Printf("Setting %d source ids took %s", len(sourceIDs), time.Since(start).String())
