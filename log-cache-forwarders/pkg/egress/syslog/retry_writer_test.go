@@ -1,4 +1,4 @@
-package egress_test
+package syslog_test
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 
 	loggregator "code.cloudfoundry.org/go-loggregator"
 	v2 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 	"golang.org/x/net/context"
 
 	. "github.com/onsi/ginkgo"
@@ -20,7 +20,7 @@ var _ = Describe("Retry Writer", func() {
 	Describe("Write()", func() {
 		It("calls through to a syslog writer", func() {
 			writeCloser := &spyWriteCloser{
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
 					Context: context.Background(),
 				},
@@ -39,7 +39,7 @@ var _ = Describe("Retry Writer", func() {
 			writeCloser := &spyWriteCloser{
 				returnErrCount: 1,
 				writeErr:       errors.New("write error"),
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
 					Context: context.Background(),
 				},
@@ -56,7 +56,7 @@ var _ = Describe("Retry Writer", func() {
 			writeCloser := &spyWriteCloser{
 				returnErrCount: 3,
 				writeErr:       errors.New("write error"),
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
 					Context: context.Background(),
 				},
@@ -74,7 +74,7 @@ var _ = Describe("Retry Writer", func() {
 			writeCloser := &spyWriteCloser{
 				returnErrCount: 2,
 				writeErr:       errors.New("write error"),
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
 					Context: ctx,
 				},
@@ -93,7 +93,7 @@ var _ = Describe("Retry Writer", func() {
 			writeCloser := &spyWriteCloser{
 				returnErrCount: 1,
 				writeErr:       errors.New("write error"),
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL:     &url.URL{},
 					AppID:   "some-app-id",
 					Context: context.Background(),
@@ -114,7 +114,7 @@ var _ = Describe("Retry Writer", func() {
 	Describe("Close()", func() {
 		It("delegates to the syslog writer", func() {
 			writeCloser := &spyWriteCloser{
-				binding: &egress.URLBinding{
+				binding: &syslog.URLBinding{
 					URL: &url.URL{},
 				},
 			}
@@ -146,7 +146,7 @@ var _ = Describe("Retry Writer", func() {
 
 		It("backs off exponentially with different random seeds starting at 1ms", func() {
 			for _, bt := range backoffTests {
-				backoff := egress.ExponentialDuration(bt.attempt)
+				backoff := syslog.ExponentialDuration(bt.attempt)
 
 				Expect(backoff).To(Equal(bt.expected))
 			}
@@ -155,7 +155,7 @@ var _ = Describe("Retry Writer", func() {
 })
 
 type spyWriteCloser struct {
-	binding       *egress.URLBinding
+	binding       *syslog.URLBinding
 	writeCalled   bool
 	writeEnvelope *v2.Envelope
 	writeAttempts int64
@@ -273,21 +273,21 @@ func buildRetryWriter(
 	w *spyWriteCloser,
 	maxRetries int,
 	delayMultiplier time.Duration,
-	logClient egress.LogClient,
+	logClient syslog.LogClient,
 	sourceIndex string,
-) egress.WriteCloser {
-	constructor := egress.RetryWrapper(
+) syslog.WriteCloser {
+	constructor := syslog.RetryWrapper(
 		func(
-			binding *egress.URLBinding,
-			netConf egress.NetworkConfig,
-		) egress.WriteCloser {
+			binding *syslog.URLBinding,
+			netConf syslog.NetworkConfig,
+		) syslog.WriteCloser {
 			return w
 		},
-		egress.RetryDuration(buildDelay(delayMultiplier)),
+		syslog.RetryDuration(buildDelay(delayMultiplier)),
 		maxRetries,
 		logClient,
 		sourceIndex,
 	)
 
-	return constructor(w.binding, egress.NetworkConfig{})
+	return constructor(w.binding, syslog.NetworkConfig{})
 }

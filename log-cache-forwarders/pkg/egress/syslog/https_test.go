@@ -1,4 +1,4 @@
-package egress_test
+package syslog_test
 
 import (
 	"io/ioutil"
@@ -7,17 +7,17 @@ import (
 	"net/url"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 	"code.cloudfoundry.org/rfc5424"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("HTTPWriter", func() {
-	var netConf egress.NetworkConfig
+	var netConf syslog.NetworkConfig
 
 	BeforeEach(func() {
-		netConf = egress.NetworkConfig{
+		netConf = syslog.NetworkConfig{
 			SkipCertVerify: true,
 		}
 	})
@@ -27,7 +27,7 @@ var _ = Describe("HTTPWriter", func() {
 		b := buildURLBinding(drain.URL, "test-app-id", "test-hostname")
 		netConf.SkipCertVerify = false
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -44,7 +44,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-app-id-012345678901234567890012345678901234567890",
 			"test-hostname",
 		)
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -62,7 +62,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -80,7 +80,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -131,7 +131,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -177,7 +177,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -200,7 +200,7 @@ var _ = Describe("HTTPWriter", func() {
 		Expect(drain.messages[0].StructuredData[0].Parameters[2].Value).To(Equal("1"))
 	})
 
-	It("emits an egress metric for each message", func() {
+	It("emits an syslog metric for each message", func() {
 		drain := newMockOKDrain()
 
 		b := buildURLBinding(
@@ -209,7 +209,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -227,7 +227,7 @@ var _ = Describe("HTTPWriter", func() {
 			"test-hostname",
 		)
 
-		writer := egress.NewHTTPSWriter(
+		writer := syslog.NewHTTPSWriter(
 			b,
 			netConf,
 		)
@@ -273,10 +273,10 @@ func newMockDrain(status int) *SpyDrain {
 	return drain
 }
 
-func buildURLBinding(u, appID, hostname string) *egress.URLBinding {
+func buildURLBinding(u, appID, hostname string) *syslog.URLBinding {
 	parsedURL, _ := url.Parse(u)
 
-	return &egress.URLBinding{
+	return &syslog.URLBinding{
 		URL:      parsedURL,
 		AppID:    appID,
 		Hostname: hostname,

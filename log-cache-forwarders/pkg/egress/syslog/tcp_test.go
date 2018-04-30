@@ -1,4 +1,4 @@
-package egress_test
+package syslog_test
 
 import (
 	"bufio"
@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
@@ -19,11 +19,11 @@ import (
 var _ = Describe("TCPWriter", func() {
 	var (
 		listener net.Listener
-		binding  = &egress.URLBinding{
+		binding  = &syslog.URLBinding{
 			AppID:    "test-app-id",
 			Hostname: "test-hostname",
 		}
-		netConf = egress.NetworkConfig{
+		netConf = syslog.NetworkConfig{
 			WriteTimeout: time.Second,
 			DialTimeout:  100 * time.Millisecond,
 		}
@@ -42,13 +42,13 @@ var _ = Describe("TCPWriter", func() {
 
 	Describe("Write()", func() {
 		var (
-			writer egress.WriteCloser
+			writer syslog.WriteCloser
 		)
 
 		BeforeEach(func() {
 			var err error
 
-			writer = egress.NewTCPWriter(
+			writer = syslog.NewTCPWriter(
 				binding,
 				netConf,
 			)
@@ -166,7 +166,7 @@ var _ = Describe("TCPWriter", func() {
 			Expect(actual).To(Equal(expected))
 		})
 
-		It("emits an egress metric for each message", func() {
+		It("emits an syslog metric for each message", func() {
 			env := buildLogEnvelope("OTHER", "1", "no null `\x00` please", loggregator_v2.Log_OUT)
 			writer.Write(env)
 		})
@@ -193,7 +193,7 @@ var _ = Describe("TCPWriter", func() {
 			env := buildLogEnvelope("APP", "2", "just a test", loggregator_v2.Log_OUT)
 			binding.URL, _ = url.Parse("syslog://localhost-garbage:9999")
 
-			writer := egress.NewTCPWriter(
+			writer := syslog.NewTCPWriter(
 				binding,
 				netConf,
 			)
@@ -208,14 +208,14 @@ var _ = Describe("TCPWriter", func() {
 
 	Describe("Cancel Context", func() {
 		var (
-			writer egress.WriteCloser
+			writer syslog.WriteCloser
 			conn   net.Conn
 		)
 
 		Context("with a happy dialer", func() {
 			BeforeEach(func() {
 				var err error
-				writer = egress.NewTCPWriter(
+				writer = syslog.NewTCPWriter(
 					binding,
 					netConf,
 				)

@@ -12,7 +12,7 @@ import (
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/datadog"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/datadog"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/groupmanager"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/sourceidprovider"
 	datadogapi "github.com/zorkian/go-datadog-api"

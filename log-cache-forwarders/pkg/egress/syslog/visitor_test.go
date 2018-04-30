@@ -1,10 +1,10 @@
-package egress_test
+package syslog_test
 
 import (
 	"errors"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -14,7 +14,7 @@ var _ = Describe("Visitor", func() {
 	It("writes out a collection of envelopes, one at a time", func() {
 		spyWriter := newSpyWriter()
 		spyMetrics := newSpyMetrics()
-		v := egress.NewVisitor(spyWriter, spyMetrics)
+		v := syslog.NewVisitor(spyWriter, spyMetrics)
 		envs := []*loggregator_v2.Envelope{
 			{SourceId: "source-1"},
 			{SourceId: "source-2"},
@@ -28,10 +28,10 @@ var _ = Describe("Visitor", func() {
 		Expect(spyWriter.calledWith).To(Equal(envs))
 	})
 
-	It("increments ingress and egress metric when envelope is written", func() {
+	It("increments ingress and syslog metric when envelope is written", func() {
 		spyWriter := newSpyWriter()
 		spyMetrics := newSpyMetrics()
-		v := egress.NewVisitor(spyWriter, spyMetrics)
+		v := syslog.NewVisitor(spyWriter, spyMetrics)
 		envs := []*loggregator_v2.Envelope{
 			{SourceId: "source-1"},
 			{SourceId: "source-2"},
@@ -49,7 +49,7 @@ var _ = Describe("Visitor", func() {
 		spyWriter := newSpyWriter()
 		spyWriter.result = errors.New("write error")
 		spyMetrics := newSpyMetrics()
-		v := egress.NewVisitor(spyWriter, spyMetrics)
+		v := syslog.NewVisitor(spyWriter, spyMetrics)
 		envs := []*loggregator_v2.Envelope{
 			{SourceId: "source-1"},
 			{SourceId: "source-2"},

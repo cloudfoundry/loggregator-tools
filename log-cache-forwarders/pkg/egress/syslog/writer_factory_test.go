@@ -1,9 +1,9 @@
-package egress_test
+package syslog_test
 
 import (
 	"net/url"
 
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -13,9 +13,9 @@ var _ = Describe("WriterFactory", func() {
 		url, err := url.Parse("https://the-syslog-endpoint.com")
 		Expect(err).ToNot(HaveOccurred())
 
-		writer := egress.NewWriter("source-id", "source-host", url, egress.NetworkConfig{})
+		writer := syslog.NewWriter("source-id", "source-host", url, syslog.NetworkConfig{})
 
-		_, ok := writer.(*egress.HTTPSWriter)
+		_, ok := writer.(*syslog.HTTPSWriter)
 		Expect(ok).To(BeTrue())
 	})
 
@@ -23,9 +23,9 @@ var _ = Describe("WriterFactory", func() {
 		url, err := url.Parse("syslog://the-syslog-endpoint.com")
 		Expect(err).ToNot(HaveOccurred())
 
-		writer := egress.NewWriter("source-id", "source-host", url, egress.NetworkConfig{})
+		writer := syslog.NewWriter("source-id", "source-host", url, syslog.NetworkConfig{})
 
-		_, ok := writer.(*egress.TCPWriter)
+		_, ok := writer.(*syslog.TCPWriter)
 		Expect(ok).To(BeTrue())
 	})
 })

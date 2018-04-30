@@ -12,7 +12,7 @@ import (
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/syslog/internal/egress"
+	egress "code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/expvarfilter"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/metrics"
 )

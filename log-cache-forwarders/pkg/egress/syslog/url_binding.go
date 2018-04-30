@@ -1,4 +1,4 @@
-package egress
+package syslog
 
 // URLBinding associates a particular application with a syslog URL. The
 import (

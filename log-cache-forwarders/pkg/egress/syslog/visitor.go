@@ -1,4 +1,4 @@
-package egress
+package syslog
 
 import (
 	"log"
@@ -14,7 +14,7 @@ type metrics interface {
 
 func NewVisitor(w Writer, metrics metrics) logcache.Visitor {
 	ingress := metrics.NewCounter("Ingress")
-	egress := metrics.NewCounter("Egress")
+	syslog := metrics.NewCounter("Egress")
 	dropped := metrics.NewCounter("Dropped")
 
 	return func(envs []*loggregator_v2.Envelope) bool {
@@ -28,7 +28,7 @@ func NewVisitor(w Writer, metrics metrics) logcache.Visitor {
 		sentCount := len(envs) - droppedCount
 		ingress(uint64(len(envs)))
 		dropped(uint64(droppedCount))
-		egress(uint64(sentCount))
+		syslog(uint64(sentCount))
 
 		log.Printf("Wrote %d envelopes to syslog!", sentCount)
 		return true
