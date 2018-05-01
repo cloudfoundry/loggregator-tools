@@ -176,6 +176,10 @@ function validate_push {
         SINK_DEPLOY CF_USERNAME CF_PASSWORD CF_SPACE CF_ORG CF_APP_DOMAIN
 }
 
+function ensure_clean_state {
+    rm -f output.txt
+}
+
 function main {
     validate_push
 
@@ -188,6 +192,7 @@ function main {
     fi
 
     ensure_spinner_app
+    ensure_clean_state
     ensure_drain_service
     bind_service
 
