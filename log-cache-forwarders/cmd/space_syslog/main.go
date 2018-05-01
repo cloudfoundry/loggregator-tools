@@ -13,6 +13,7 @@ import (
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	logcache "code.cloudfoundry.org/go-log-cache"
+	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/cmd/space_syslog/internal/logcacheutil"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/egress/syslog"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/expvarfilter"
 	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/groupmanager"
@@ -44,6 +45,11 @@ func main() {
 		groupClient,
 	)
 
+	envTypes, err := logcacheutil.DrainTypeToEnvelopeTypes(cfg.DrainType)
+	if err != nil {
+		log.Fatalf("cannot start space syslog forwarder: %s", err)
+	}
+
 	logcache.Walk(
 		context.Background(),
 		cfg.LogCacheGroupName,
@@ -53,6 +59,7 @@ func main() {
 		logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(250*time.Millisecond)),
 		logcache.WithWalkLimit(1000),
 		logcache.WithWalkLogger(log.New(os.Stderr, "", log.LstdFlags)),
+		logcache.WithWalkEnvelopeTypes(envTypes...),
 	)
 }
 

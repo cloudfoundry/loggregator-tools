@@ -9,11 +9,15 @@ import (
 )
 
 type Config struct {
-	SpaceGUID         string `env:"SPACE_GUID",      required`
-	SourceHostname    string `env:"SOURCE_HOST_NAME, required"`
+	SpaceGUID      string `env:"SPACE_GUID",      required`
+	SourceHostname string `env:"SOURCE_HOST_NAME, required"`
+
 	LogCacheGroupName string `env:"GROUP_NAME",      required`
 
 	CAPIURL string `env:"CAPI_URL", required`
+
+	DrainName string `env:"DRAIN_NAME", required`
+	DrainType string `env:"DRAIN_TYPE"`
 
 	UAAURL       string `env:"UAA_URL,       required"`
 	ClientID     string `env:"CLIENT_ID,     required"`
@@ -38,6 +42,7 @@ func LoadConfig() Config {
 		KeepAlive:      10 * time.Second,
 		DialTimeout:    5 * time.Second,
 		IOTimeout:      time.Minute,
+		DrainType:      "all",
 	}
 	if err := envstruct.Load(&cfg); err != nil {
 		log.Fatalf("failed to load config from environment: %s", err)
