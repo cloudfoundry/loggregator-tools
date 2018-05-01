@@ -9,7 +9,7 @@ import (
 )
 
 type Config struct {
-	SpaceGUID      string `env:"SPACE_GUID",      required`
+	SpaceGUID      string `env:"SPACE_ID",      required`
 	SourceHostname string `env:"SOURCE_HOST_NAME, required"`
 
 	LogCacheHTTPAddr  string `env:"LOG_CACHE_HTTP_ADDR, required"`
