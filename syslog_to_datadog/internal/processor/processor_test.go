@@ -64,7 +64,7 @@ var _ = Describe("Processor", func() {
 		Consistently(spyClient.posts).Should(BeEmpty())
 	})
 
-	It("only processes gauge messages", func() {
+	It("processes counter metrics", func() {
 		var getterCalled bool
 		getter := func() ([]byte, bool) {
 			if getterCalled {
@@ -74,11 +74,25 @@ var _ = Describe("Processor", func() {
 			return buildCounterMessage(), true
 		}
 		spyClient := &spyClient{}
-		p := processor.New(getter, spyClient, "", "an-api-key")
+		p := processor.New(getter, spyClient, "https://an-api-addr", "an-api-key")
 
 		go p.Run()
 
-		Consistently(spyClient.posts).Should(BeEmpty())
+		Eventually(spyClient.posts).Should(HaveLen(1))
+		post := spyClient.posts()[0]
+		Expect(post.url).To(Equal("https://an-api-addr/api/v1/series?api_key=an-api-key"))
+		Expect(post.contentType).To(Equal("application/json"))
+		Expect(post.body).To(MatchJSON(`{
+			"series": [
+				{
+					"metric": "myhostname.requests",
+					"points": [[0, 1234]],
+					"type": "gauge",
+					"host": "myhostname",
+					"tags": ["instance_id:4"]
+				}
+			]
+		}`))
 	})
 
 	It("only sends the first structured data element", func() {
@@ -140,6 +154,7 @@ func buildCounterMessage() []byte {
 		Hostname:  "myhostname",
 		AppName:   "someapp",
 		Message:   []byte("some log"),
+		ProcessID: "[4]",
 		StructuredData: []rfc5424.StructuredData{
 			{
 				ID: "counter@47450",

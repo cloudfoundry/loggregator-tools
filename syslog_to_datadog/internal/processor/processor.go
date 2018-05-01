@@ -85,6 +85,13 @@ func (p *Processor) Run() {
 				}
 				break
 			}
+			if strings.HasPrefix(sd.ID, "counter@") {
+				err := p.postCounter(msg, sd)
+				if err != nil {
+					log.Printf("failed to post to datadog: %s", err)
+				}
+				break
+			}
 		}
 	}
 }
@@ -99,7 +106,23 @@ func (p *Processor) postGauge(msg rfc5424.Message, sd rfc5424.StructuredData) er
 			value = p.Value
 		}
 	}
+	return p.postMetric(name, value, msg)
+}
 
+func (p *Processor) postCounter(msg rfc5424.Message, sd rfc5424.StructuredData) error {
+	var name, value string
+	for _, p := range sd.Parameters {
+		switch p.Name {
+		case "name":
+			name = p.Value
+		case "total":
+			value = p.Value
+		}
+	}
+	return p.postMetric(name, value, msg)
+}
+
+func (p *Processor) postMetric(name, value string, msg rfc5424.Message) error {
 	instanceID := strings.TrimPrefix(msg.ProcessID, "[")
 	instanceID = strings.TrimSuffix(instanceID, "]")
 
@@ -114,6 +137,10 @@ func (p *Processor) postGauge(msg rfc5424.Message, sd rfc5424.StructuredData) er
 			instanceID,
 		),
 	)
+	return p.rawPost(body)
+}
+
+func (p *Processor) rawPost(body io.Reader) error {
 	resp, err := p.client.Post(p.apiURL.String(), "application/json", body)
 	if err != nil {
 		return err
