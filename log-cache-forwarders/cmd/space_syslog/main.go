@@ -80,7 +80,7 @@ func createGroupProvider(cfg Config) *sourceidprovider.SpaceProvider {
 		cAPICurler{
 			client: newOauth2HTTPClient(cfg),
 		},
-		cfg.CAPIURL,
+		cfg.ApiAddr,
 		cfg.SpaceGUID,
 	)
 }
@@ -92,7 +92,7 @@ func createSyslogWriter(cfg Config) syslog.WriteCloser {
 		WriteTimeout:   cfg.IOTimeout,
 		SkipCertVerify: cfg.SkipCertVerify,
 	}
-	return syslog.NewWriter(cfg.SourceHostname, cfg.SyslogURL, netConf)
+	return syslog.NewWriter(cfg.SourceHostname, cfg.DrainURL, netConf)
 }
 
 func newOauth2HTTPClient(cfg Config) *logcache.Oauth2HTTPClient {
@@ -106,7 +106,7 @@ func newOauth2HTTPClient(cfg Config) *logcache.Oauth2HTTPClient {
 	}
 
 	return logcache.NewOauth2HTTPClient(
-		cfg.UAAURL,
+		cfg.UAAAddr,
 		cfg.ClientID,
 		cfg.ClientSecret,
 		logcache.WithOauth2HTTPClient(client),
