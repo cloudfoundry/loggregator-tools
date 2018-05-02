@@ -17,7 +17,7 @@ type Config struct {
 
 	DrainName string   `env:"DRAIN_NAME", required`
 	DrainType string   `env:"DRAIN_TYPE"`
-	DrainURL  *url.URL `env:"SYSLOG_URL,          required"`
+	DrainURL  *url.URL `env:"DRAIN_URL,          required"`
 
 	UAAAddr      string `env:"UAA_ADDR,       required"`
 	ClientID     string `env:"CLIENT_ID,     required"`
