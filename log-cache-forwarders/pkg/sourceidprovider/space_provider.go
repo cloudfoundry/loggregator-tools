@@ -11,34 +11,59 @@ type Curler interface {
 }
 
 type SpaceProvider struct {
-	c         Curler
-	spaceGuid string
-	apiURL    string
+	c               Curler
+	includeServices bool
+	spaceGuid       string
+	apiURL          string
 }
 
-func Space(c Curler, apiURL, spaceGuid string) *SpaceProvider {
-	return &SpaceProvider{
+type SpaceOption func(*SpaceProvider)
+
+func WithSpaceServiceInstances() SpaceOption {
+	return func(s *SpaceProvider) {
+		s.includeServices = true
+	}
+}
+
+func Space(c Curler, apiURL, spaceGuid string, opts ...SpaceOption) *SpaceProvider {
+	sp := &SpaceProvider{
 		c:         c,
 		spaceGuid: spaceGuid,
 		apiURL:    apiURL,
 	}
+
+	for _, o := range opts {
+		o(sp)
+	}
+
+	return sp
 }
 
 func (s *SpaceProvider) SourceIDs() []string {
-	resp := s.c.Get(fmt.Sprintf("%s/v3/apps?space_guids=%s", s.apiURL, s.spaceGuid))
+	sourceIDs := s.guidsFor("apps")
 
-	var cApps response
-	err := json.Unmarshal(resp, &cApps)
+	if s.includeServices {
+		sourceIDs = append(sourceIDs, s.guidsFor("service_instances")...)
+	}
+
+	return sourceIDs
+}
+
+func (s *SpaceProvider) guidsFor(resource string) []string {
+	resp := s.c.Get(fmt.Sprintf("%s/v3/%s?space_guids=%s", s.apiURL, resource, s.spaceGuid))
+
+	var capiResources response
+	err := json.Unmarshal(resp, &capiResources)
 	if err != nil {
 		log.Printf("error getting app info from CAPI: %s", err)
 		return nil
 	}
 
-	var apps []string
-	for _, app := range cApps.Resources {
-		apps = append(apps, app.Guid)
+	var guids []string
+	for _, resource := range capiResources.Resources {
+		guids = append(guids, resource.Guid)
 	}
-	return apps
+	return guids
 }
 
 type response struct {
