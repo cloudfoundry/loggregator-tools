@@ -82,6 +82,7 @@ func createGroupProvider(cfg Config) *sourceidprovider.SpaceProvider {
 		},
 		cfg.ApiAddr,
 		cfg.SpaceGUID,
+		sourceidprovider.WithSpaceServiceInstances(),
 	)
 }
 
