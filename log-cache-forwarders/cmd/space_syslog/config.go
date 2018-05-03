@@ -15,7 +15,6 @@ type Config struct {
 	LogCacheHTTPAddr  string `env:"LOG_CACHE_HTTP_ADDR, required"`
 	LogCacheGroupName string `env:"GROUP_NAME",      required`
 
-	DrainName string   `env:"DRAIN_NAME", required`
 	DrainType string   `env:"DRAIN_TYPE"`
 	DrainURL  *url.URL `env:"DRAIN_URL,          required"`
 
