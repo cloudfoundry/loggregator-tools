@@ -70,6 +70,7 @@ func main() {
 
 	for {
 		log.Printf("emmiting a counter")
+		env.Timestamp = time.Now().UnixNano()
 		err := sender.Send(env)
 		if err != nil {
 			log.Fatal(err)
