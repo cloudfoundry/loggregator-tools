@@ -33,9 +33,9 @@ func main() {
 	}
 
 	creds, err := loggregator.NewIngressTLSConfig(
+		c.CAFile,
 		c.CertFile,
 		c.KeyFile,
-		c.CAFile,
 	)
 	if err != nil {
 		log.Fatal(err)
