@@ -57,6 +57,11 @@ func main() {
 func buildDataDogWriter(ddc *datadog.Client, prefix, host string) func([]*loggregator_v2.Envelope) bool {
 	return func(es []*loggregator_v2.Envelope) bool {
 		for _, e := range es {
+			ddtags := make([]string, 0)
+			tags := e.GetTags()
+			for key, value := range tags {
+				ddtags = append(ddtags, key + ":" + value)
+			}
 			switch e.Message.(type) {
 			case *loggregator_v2.Envelope_Gauge:
 				for name, value := range e.GetGauge().Metrics {
@@ -73,6 +78,7 @@ func buildDataDogWriter(ddc *datadog.Client, prefix, host string) func([]*loggre
 						Points: toDataPoint(e.Timestamp, value.GetValue()),
 						Type:   &mType,
 						Host:   &host,
+						Tags: ddtags,
 					}
 
 					log.Printf("Posting %s: %v", name, value.GetValue())
@@ -95,6 +101,7 @@ func buildDataDogWriter(ddc *datadog.Client, prefix, host string) func([]*loggre
 					Points: toDataPoint(e.Timestamp, float64(e.GetCounter().GetTotal())),
 					Type:   &mType,
 					Host:   &host,
+					Tags: ddtags,
 				}
 
 				log.Printf("Posting %s: %v", name, e.GetCounter().GetTotal())
@@ -103,6 +110,22 @@ func buildDataDogWriter(ddc *datadog.Client, prefix, host string) func([]*loggre
 
 				if err != nil {
 					log.Printf("failed to write metrics to DataDog: %s", err)
+				}
+			case *loggregator_v2.Envelope_Event:
+				event := e.GetEvent()
+				title := event.GetTitle()
+				text := event.GetBody()
+				ddevent := datadog.Event{
+					Title: &title,
+					Text: &text,
+					Host: &host,
+					Tags: ddtags,
+				}
+
+				log.Printf("Posting %s: %v", title, text)
+				_,err := ddc.PostEvent(&ddevent)
+				if err != nil {
+					log.Printf("failed to write events to datadog: %s, err")
 				}
 			default:
 				continue
