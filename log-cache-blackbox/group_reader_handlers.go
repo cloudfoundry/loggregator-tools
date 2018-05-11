@@ -13,6 +13,7 @@ import (
 	"time"
 
 	logcache "code.cloudfoundry.org/go-log-cache"
+	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	uuid "github.com/nu7hatch/gouuid"
 )
@@ -133,6 +134,7 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 			logcache.WithWalkStartTime(start),
 			logcache.WithWalkEndTime(end),
 			logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(time.Second)),
+			logcache.WithWalkEnvelopeTypes(logcache_v1.EnvelopeType_LOG),
 		)
 
 		result := ReliabilityTestResult{
