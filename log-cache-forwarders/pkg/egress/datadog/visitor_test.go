@@ -53,6 +53,44 @@ var _ = Describe("Visitor", func() {
 			Expect(*p[1]).To(Equal(float64(123)))
 		})
 
+		It("writes events to the datadog client", func() {
+			ddc := &stubDatadogClient{}
+			visitor := datadog.Visitor(ddc, "hostname", []string{"tag-1", "tag-2"})
+
+			cont := visitor([]*loggregator_v2.Envelope{
+				{
+					Timestamp:      1000000000,
+					Tags:           map[string]string{
+						"event_origin": "doppler",
+					},
+					Message: &loggregator_v2.Envelope_Event{
+						Event: &loggregator_v2.Event{
+							Title: "event-a",
+							Body:  "event-body-a",
+						},
+					},
+				},
+				{
+					Timestamp: 1000000000,
+					Message: &loggregator_v2.Envelope_Event{
+						Event: &loggregator_v2.Event{
+							Title: "event-b",
+							Body:  "event-body-b",
+						},
+					},
+				},
+			})
+
+			Expect(cont).To(BeTrue())
+			Expect(ddc.events).To(HaveLen(2))
+
+			m := ddc.events[0]
+			Expect(*m.Title).To(Equal("event-a"))
+			Expect(*m.Text).To(Equal("event-body-a"))
+			Expect(*m.Host).To(Equal("hostname"))
+			Expect(m.Tags).To(ConsistOf("tag-1", "tag-2", "event_origin:doppler"))
+		})
+
 		It("metric name includes source id if present", func() {
 			ddc := &stubDatadogClient{}
 			visitor := datadog.Visitor(ddc, "hostname", []string{})
@@ -181,10 +219,16 @@ var _ = Describe("Visitor", func() {
 type stubDatadogClient struct {
 	postMetricsCalled bool
 	metrics           []datadogapi.Metric
+	events            []*datadogapi.Event
 }
 
 func (s *stubDatadogClient) PostMetrics(m []datadogapi.Metric) error {
 	s.postMetricsCalled = true
 	s.metrics = append(s.metrics, m...)
 	return nil
+}
+
+func (s *stubDatadogClient) PostEvent(e *datadogapi.Event) (*datadogapi.Event, error) {
+	s.events = append(s.events, e)
+	return e, nil
 }

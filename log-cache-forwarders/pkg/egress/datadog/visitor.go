@@ -11,12 +11,21 @@ import (
 
 type Client interface {
 	PostMetrics(m []datadog.Metric) error
+	PostEvent(e *datadog.Event) (*datadog.Event, error)
 }
 
 func Visitor(c Client, host string, tags []string) func(es []*loggregator_v2.Envelope) bool {
 	return func(es []*loggregator_v2.Envelope) bool {
 		var metrics []datadog.Metric
+		var events []*datadog.Event
+
 		for _, e := range es {
+			ddtags := append(make([]string, 0), tags...)
+
+			for key, value := range e.GetTags() {
+				ddtags = append(ddtags, key+":"+value)
+			}
+
 			switch e.Message.(type) {
 			case *loggregator_v2.Envelope_Gauge:
 				for name, value := range e.GetGauge().Metrics {
@@ -33,7 +42,7 @@ func Visitor(c Client, host string, tags []string) func(es []*loggregator_v2.Env
 						Points: toDataPoint(e.Timestamp, value.GetValue()),
 						Type:   &mType,
 						Host:   &host,
-						Tags:   tags,
+						Tags:   ddtags,
 					})
 				}
 			case *loggregator_v2.Envelope_Counter:
@@ -48,21 +57,44 @@ func Visitor(c Client, host string, tags []string) func(es []*loggregator_v2.Env
 					Points: toDataPoint(e.Timestamp, float64(e.GetCounter().GetTotal())),
 					Type:   &mType,
 					Host:   &host,
-					Tags:   tags,
+					Tags:   ddtags,
+				})
+			case *loggregator_v2.Envelope_Event:
+				event := e.GetEvent()
+				title := event.GetTitle()
+				text := event.GetBody()
+
+				events = append(events, &datadog.Event{
+					Title: &title,
+					Text:  &text,
+					Host:  &host,
+					Tags:  ddtags,
 				})
 			default:
 				continue
 			}
 		}
 
-		if len(metrics) < 1 {
-			return true
+		if len(metrics) > 0 {
+			if err := c.PostMetrics(metrics); err != nil {
+				log.Printf("failed to write metrics to DataDog: %s", err)
+			} else {
+				log.Printf("posted %d metrics", len(metrics))
+			}
 		}
 
-		if err := c.PostMetrics(metrics); err != nil {
-			log.Printf("failed to write metrics to DataDog: %s", err)
+		if len(events) > 0 {
+			successfulSends := 0
+			for _, e := range events {
+				if _, err := c.PostEvent(e); err != nil {
+					log.Printf("failed to write event to DataDog: %s", err)
+				} else {
+					successfulSends++
+				}
+			}
+
+			log.Printf("posted %d events", successfulSends)
 		}
-		log.Printf("posted %d metrics", len(metrics))
 
 		return true
 	}
