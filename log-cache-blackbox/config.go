@@ -31,7 +31,7 @@ type VCapApp struct {
 }
 
 func (v *VCapApp) UnmarshalEnv(jsonData string) error {
-	if v == nil || v.ApplicationID == "" {
+	if jsonData == "" {
 		return nil
 	}
 	return json.Unmarshal([]byte(jsonData), &v)
