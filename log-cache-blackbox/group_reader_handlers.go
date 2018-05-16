@@ -155,16 +155,18 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 }
 
 func buildGroupClient(cfg Config, httpClient *http.Client) *logcache.ShardGroupReaderClient {
+	var localClient logcache.HTTPClient = httpClient
+	if cfg.UAAAddr != "" {
+		localClient = logcache.NewOauth2HTTPClient(
+			cfg.UAAAddr,
+			cfg.UAAClient,
+			cfg.UAAClientSecret,
+			logcache.WithOauth2HTTPClient(httpClient),
+		)
+	}
 	return logcache.NewShardGroupReaderClient(
 		cfg.LogCacheURL.String(),
-		logcache.WithHTTPClient(
-			logcache.NewOauth2HTTPClient(
-				cfg.UAAAddr,
-				cfg.UAAClient,
-				cfg.UAAClientSecret,
-				logcache.WithOauth2HTTPClient(httpClient),
-			),
-		),
+		logcache.WithHTTPClient(localClient),
 	)
 }
 
@@ -194,16 +196,18 @@ func maintainGroup(
 }
 
 func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) {
+	var localClient logcache.HTTPClient = httpClient
+	if cfg.UAAAddr != "" {
+		localClient = logcache.NewOauth2HTTPClient(
+			cfg.UAAAddr,
+			cfg.UAAClient,
+			cfg.UAAClientSecret,
+			logcache.WithOauth2HTTPClient(httpClient),
+		)
+	}
 	client := logcache.NewClient(
 		cfg.LogCacheURL.String(),
-		logcache.WithHTTPClient(
-			logcache.NewOauth2HTTPClient(
-				cfg.UAAAddr,
-				cfg.UAAClient,
-				cfg.UAAClientSecret,
-				logcache.WithOauth2HTTPClient(httpClient),
-			),
-		),
+		logcache.WithHTTPClient(localClient),
 	)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -214,7 +218,7 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 
 	cs := make([]count, 0)
 	for k, v := range meta {
-		if k == cfg.VCapApp.ApplicationID {
+		if k == cfg.Source() {
 			continue
 		}
 		cs = append(cs, count{
@@ -227,7 +231,7 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 
 	sourceIDs := make([]string, 0, size)
 	for _, k := range cs {
-		if k.sourceID == cfg.VCapApp.ApplicationID {
+		if k.sourceID == cfg.Source() {
 			continue
 		}
 		if len(sourceIDs) < size-1 {
@@ -235,7 +239,7 @@ func sourceIDs(httpClient *http.Client, cfg Config, size int) ([]string, error) 
 			log.Printf("Using %s with count %d", k.sourceID, k.count)
 		}
 	}
-	sourceIDs = append(sourceIDs, cfg.VCapApp.ApplicationID)
+	sourceIDs = append(sourceIDs, cfg.Source())
 	if len(sourceIDs) != size {
 		return nil, fmt.Errorf("Asked for %d source IDs but only found %d", size, len(sourceIDs))
 	}

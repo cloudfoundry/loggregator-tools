@@ -18,20 +18,22 @@ func latencyHandler(cfg Config, httpClient *http.Client) http.Handler {
 		ctx, cancel := context.WithCancel(r.Context())
 		defer cancel()
 
+		var localClient logcache.HTTPClient = httpClient
+		if cfg.UAAAddr != "" {
+			localClient = logcache.NewOauth2HTTPClient(
+				cfg.UAAAddr,
+				cfg.UAAClient,
+				cfg.UAAClientSecret,
+				logcache.WithOauth2HTTPClient(httpClient),
+			)
+		}
 		client := logcache.NewClient(
 			cfg.LogCacheURL.String(),
-			logcache.WithHTTPClient(
-				logcache.NewOauth2HTTPClient(
-					cfg.UAAAddr,
-					cfg.UAAClient,
-					cfg.UAAClientSecret,
-					logcache.WithOauth2HTTPClient(httpClient),
-				),
-			),
+			logcache.WithHTTPClient(localClient),
 		)
 
 		latCtx, _ := context.WithTimeout(ctx, 10*time.Second)
-		resultData, err := measureLatency(latCtx, client.Read, cfg.VCapApp.ApplicationID)
+		resultData, err := measureLatency(latCtx, client.Read, cfg.Source())
 		if err != nil {
 			log.Printf("error getting result data: %s", err)
 			w.WriteHeader(http.StatusInternalServerError)
@@ -51,9 +53,9 @@ func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 		reader := client.Read
 
 		primeCtx, _ := context.WithTimeout(ctx, time.Minute)
-		err := prime(primeCtx, cfg.VCapApp.ApplicationID, reader)
+		err := prime(primeCtx, cfg.Source(), reader)
 		if err != nil {
-			log.Printf("unable to prime for source id: %s: %s", cfg.VCapApp.ApplicationID, err)
+			log.Printf("unable to prime for source id: %s: %s", cfg.Source(), err)
 			w.WriteHeader(http.StatusInternalServerError)
 			return
 		}
@@ -75,7 +77,7 @@ func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 		walkCtx, _ := context.WithTimeout(ctx, 40*time.Second)
 		logcache.Walk(
 			walkCtx,
-			cfg.VCapApp.ApplicationID,
+			cfg.Source(),
 			func(envelopes []*loggregator_v2.Envelope) bool {
 				for _, e := range envelopes {
 					if strings.Contains(string(e.GetLog().GetPayload()), prefix) {
@@ -110,13 +112,17 @@ func reliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 }
 
 func buildClient(cfg Config, httpClient *http.Client) *logcache.Client {
-	return logcache.NewClient(
-		cfg.LogCacheURL.String(),
-		logcache.WithHTTPClient(logcache.NewOauth2HTTPClient(
+	var localClient logcache.HTTPClient = httpClient
+	if cfg.UAAAddr != "" {
+		localClient = logcache.NewOauth2HTTPClient(
 			cfg.UAAAddr,
 			cfg.UAAClient,
 			cfg.UAAClientSecret,
-			logcache.WithOauth2HTTPClient(httpClient)),
-		),
+			logcache.WithOauth2HTTPClient(httpClient),
+		)
+	}
+	return logcache.NewClient(
+		cfg.LogCacheURL.String(),
+		logcache.WithHTTPClient(localClient),
 	)
 }
