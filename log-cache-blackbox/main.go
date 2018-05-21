@@ -12,7 +12,9 @@ import (
 )
 
 func main() {
-	var cfg Config
+	cfg := Config{
+		WalkDelay: time.Second,
+	}
 	err := envstruct.Load(&cfg)
 	if err != nil {
 		log.Fatalf("failed to load config: %s", err)

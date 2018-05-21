@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"net/url"
+	"time"
 )
 
 type Config struct {
@@ -17,6 +18,8 @@ type Config struct {
 	UAAClientSecret string `env:"UAA_CLIENT_SECRET"`
 
 	SkipSSLValidation bool `env:"SKIP_SSL_VALIDATION, report"`
+
+	WalkDelay time.Duration `env:WALK_DELAY, report"`
 }
 
 func (c Config) Source() string {
