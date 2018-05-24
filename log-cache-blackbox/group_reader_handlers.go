@@ -133,7 +133,7 @@ func groupReliabilityHandler(cfg Config, httpClient *http.Client) http.Handler {
 			reader,
 			logcache.WithWalkStartTime(start),
 			logcache.WithWalkEndTime(end),
-			logcache.WithWalkBackoff(logcache.NewAlwaysRetryBackoff(time.Second)),
+			logcache.WithWalkBackoff(logcache.NewRetryBackoff(time.Second, 30)),
 			logcache.WithWalkEnvelopeTypes(logcache_v1.EnvelopeType_LOG),
 		)
 
