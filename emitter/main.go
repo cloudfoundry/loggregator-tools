@@ -23,6 +23,7 @@ type config struct {
 	KeyFile  string        `env:"KEY,required"`
 	CAFile   string        `env:"CA,required"`
 	Rate     time.Duration `env:"RATE,required"`
+	SourceID string        `env:"SOURCE_ID"`
 }
 
 func main() {
@@ -56,6 +57,7 @@ func main() {
 	client := loggregator_v2.NewIngressClient(conn)
 
 	env := &loggregator_v2.Envelope{
+		SourceId: c.SourceID,
 		Message: &loggregator_v2.Envelope_Counter{
 			Counter: &loggregator_v2.Counter{
 				Name:  "some-counter",
