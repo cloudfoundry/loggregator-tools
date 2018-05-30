@@ -14,6 +14,7 @@ import (
 // Config is the configuration for a LogCache.
 type Config struct {
 	LogCacheAddr string `env:"LOG_CACHE_ADDR, required"`
+	Addr         string `env:"ADDR,           required"`
 	LogCacheTLS  TLS
 }
 

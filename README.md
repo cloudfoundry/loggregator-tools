@@ -48,6 +48,12 @@ can be configured to hit specific source IDs, at a given cycle and delay.
 Log Cache Siege is configured with the address of a request-spinner to
 instruct request-spinner to hit every available source ID.
 
+## [Log Cache Emitter][log-cache-emitter]
+
+Log Cache Emitter is meant to be bosh deployed and will emit 10,000 logs to
+log cache for each source id given. request takes the form of GET to
+http://<host>:<port>/emit?sourceIDs=source1&sourceIDs=source2
+
 ## [Slow Consumer][slow-consumer]
 
 The Slow Consumer is a firehose nozzle that will induce the TrafficController
@@ -79,6 +85,7 @@ and available via JSON and the Firehose.
 [jsonspinner]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/jsonspinner
 [request-spinner]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/request-spinner
 [log-cache-siege]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-siege
+[log-cache-emitter]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-emitter
 [slow-consumer]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/slow_consumer
 [postprinter]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/postprinter
 [datadog-forwarder]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-forwarders/datadog
