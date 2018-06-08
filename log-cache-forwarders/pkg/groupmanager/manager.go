@@ -2,6 +2,7 @@ package groupmanager
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 )
@@ -75,6 +76,7 @@ func (m *Manager) run() {
 func (m *Manager) updateSourceIDs(sourceIDs []string) {
 	start := time.Now()
 	for _, sid := range sourceIDs {
+		fmt.Println(sid)
 		if err := m.gu.SetShardGroup(context.Background(), m.groupName, sid); err != nil {
 			log.Printf("failed to set shard group: %s", err)
 		}

@@ -76,6 +76,10 @@ func Visitor(c Client, host string, tags []string) func(es []*loggregator_v2.Env
 		}
 
 		if len(metrics) > 0 {
+			for _, m := range metrics {
+				fmt.Println(*m.Metric)
+			}
+
 			if err := c.PostMetrics(metrics); err != nil {
 				log.Printf("failed to write metrics to DataDog: %s", err)
 			} else {
@@ -86,6 +90,8 @@ func Visitor(c Client, host string, tags []string) func(es []*loggregator_v2.Env
 		if len(events) > 0 {
 			successfulSends := 0
 			for _, e := range events {
+				fmt.Println(*e.Title)
+
 				if _, err := c.PostEvent(e); err != nil {
 					log.Printf("failed to write event to DataDog: %s", err)
 				} else {
