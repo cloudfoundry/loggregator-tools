@@ -24,15 +24,18 @@ var _ = Describe("Nozzle", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer syslogListener.Close()
 		syslogAddr := syslogListener.Addr().String()
-		spyCounter := &spyCounter{}
+		spyEgressedCounter := &spyCounter{}
+		spyIgnoredCounter := &spyCounter{}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
 			syslogAddr,
 			"some-shard-id",
-			app.WithEgressedCounter(spyCounter),
+			app.WithEgressedCounter(spyEgressedCounter),
+			app.WithIgnoredEnvelopeCounter(spyIgnoredCounter),
 		)
-		spyStreamConnector.addEnvelope(0, "test-source-id-1")
-		spyStreamConnector.addEnvelope(0, "test-source-id-2")
+		spyStreamConnector.addEnvelopeWithTags(0, "test-source-id-1", map[string]string{"namespace": "ns1"})
+		spyStreamConnector.addEnvelopeWithTags(0, "test-source-id-2", map[string]string{"namespace": "ns2"})
+		spyStreamConnector.addEnvelopeWithTags(0, "test-source-id-3", map[string]string{"namespace": "ns3"})
 
 		go nozzle.Start()
 		defer nozzle.Close()
@@ -41,17 +44,94 @@ var _ = Describe("Nozzle", func() {
 		Expect(err).ToNot(HaveOccurred())
 		buf := bufio.NewReader(conn)
 
-		actual, err := buf.ReadString('\n')
-		Expect(err).ToNot(HaveOccurred())
+		errs := make(chan error, 100)
+		msgs := make(chan string, 100)
+		done := make(chan struct{})
+		defer close(done)
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					actual, err := buf.ReadString('\n')
+					if err != nil {
+						errs <- err
+					}
+					msgs <- actual
+				}
+			}
+
+		}()
+		Eventually(errs).Should(HaveLen(0))
+		Eventually(msgs).Should(HaveLen(3))
 		expected := fmt.Sprintf("58 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-1 - - - \n")
-		Expect(actual).To(Equal(expected))
-
-		actual, err = buf.ReadString('\n')
-		Expect(err).ToNot(HaveOccurred())
+		Expect(<-msgs).To(Equal(expected))
 		expected = fmt.Sprintf("58 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-2 - - - \n")
-		Expect(actual).To(Equal(expected))
+		Expect(<-msgs).To(Equal(expected))
+		expected = fmt.Sprintf("58 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-3 - - - \n")
+		Expect(<-msgs).To(Equal(expected))
 
-		Expect(spyCounter.read()).To(Equal(2))
+		Expect(spyEgressedCounter.read()).To(Equal(3))
+		Expect(spyIgnoredCounter.read()).To(Equal(0))
+	})
+
+	It("sends logs for the specified namespace to syslog", func() {
+		spyStreamConnector := newSpyStreamConnector()
+		syslogListener, err := net.Listen("tcp", ":0")
+		Expect(err).ToNot(HaveOccurred())
+		defer syslogListener.Close()
+		syslogAddr := syslogListener.Addr().String()
+		spyEgressCounter := &spyCounter{}
+		spyIgnoredCounter := &spyCounter{}
+		nozzle := app.NewNozzle(
+			spyStreamConnector,
+			syslogAddr,
+			"some-shard-id",
+			app.WithEgressedCounter(spyEgressCounter),
+			app.WithIgnoredEnvelopeCounter(spyIgnoredCounter),
+			app.WithNamespace("ns1"),
+		)
+
+		spyStreamConnector.addEnvelopeWithTags(0, "ns1/rt1/rn1", map[string]string{"namespace": "ns1"})
+		spyStreamConnector.addEnvelopeWithTags(0, "ns2/rt1/rn1", map[string]string{"namespace": "ns2"})
+		spyStreamConnector.addEnvelopeWithTags(0, "ns1/rt2/rn2", map[string]string{"namespace": "ns1"})
+
+		go nozzle.Start()
+		defer nozzle.Close()
+
+		conn, err := syslogListener.Accept()
+		Expect(err).ToNot(HaveOccurred())
+		buf := bufio.NewReader(conn)
+
+		errs := make(chan error, 100)
+		msgs := make(chan string, 100)
+		done := make(chan struct{})
+		defer close(done)
+		go func() {
+			for {
+				select {
+				case <-done:
+					return
+				default:
+					actual, err := buf.ReadString('\n')
+					if err != nil {
+						errs <- err
+					}
+					msgs <- actual
+				}
+			}
+
+		}()
+		Eventually(msgs).Should(HaveLen(2))
+		Eventually(errs).Should(HaveLen(0))
+		expected := fmt.Sprintf("53 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt1/rn1 - - - \n")
+		Expect(<-msgs).To(Equal(expected))
+		expected = fmt.Sprintf("53 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt2/rn2 - - - \n")
+		Expect(<-msgs).To(Equal(expected))
+
+		Expect(spyEgressCounter.read()).To(Equal(2))
+		Expect(spyIgnoredCounter.read()).To(Equal(1))
 	})
 
 	It("can stop", func() {
@@ -87,7 +167,7 @@ var _ = Describe("Nozzle", func() {
 			spyStreamConnector,
 			syslogAddr,
 			"some-shard-id",
-			app.WithDroppedCounter(spyCounter),
+			app.WithConversionErrorCounter(spyCounter),
 		)
 		spyStreamConnector.addEnvelope(0, "test-source-id-1")
 		spyStreamConnector.addBadEnvelope()
@@ -214,6 +294,16 @@ func (c *spyStreamConnector) addEnvelope(timestamp int64, sourceID string) {
 		{
 			Timestamp: timestamp,
 			SourceId:  sourceID,
+		},
+	}
+}
+
+func (c *spyStreamConnector) addEnvelopeWithTags(timestamp int64, sourceID string, tags map[string]string) {
+	c.envelopes <- []*loggregator_v2.Envelope{
+		{
+			Timestamp: timestamp,
+			SourceId:  sourceID,
+			Tags:      tags,
 		},
 	}
 }

@@ -17,15 +17,18 @@ type noopCounter struct {
 func (noopCounter) Inc() {}
 
 type Nozzle struct {
-	sc      StreamConnector
-	addr    string
-	shardID string
+	sc        StreamConnector
+	addr      string
+	shardID   string
+	namespace string
 
 	stop chan struct{}
 	done chan struct{}
 
-	egressedCounter prometheus.Counter
-	droppedCounter  prometheus.Counter
+	egressedCounter   prometheus.Counter
+	droppedCounter    prometheus.Counter
+	ignoredEnvCounter prometheus.Counter
+	envConvertCounter prometheus.Counter
 }
 
 type StreamConnector interface {
@@ -33,6 +36,12 @@ type StreamConnector interface {
 }
 
 type NozzleOption func(*Nozzle)
+
+func WithNamespace(ns string) NozzleOption {
+	return func(n *Nozzle) {
+		n.namespace = ns
+	}
+}
 
 func WithEgressedCounter(c prometheus.Counter) NozzleOption {
 	return func(n *Nozzle) {
@@ -43,6 +52,18 @@ func WithEgressedCounter(c prometheus.Counter) NozzleOption {
 func WithDroppedCounter(c prometheus.Counter) NozzleOption {
 	return func(n *Nozzle) {
 		n.droppedCounter = c
+	}
+}
+
+func WithIgnoredEnvelopeCounter(c prometheus.Counter) NozzleOption {
+	return func(n *Nozzle) {
+		n.ignoredEnvCounter = c
+	}
+}
+
+func WithConversionErrorCounter(c prometheus.Counter) NozzleOption {
+	return func(n *Nozzle) {
+		n.envConvertCounter = c
 	}
 }
 
@@ -58,8 +79,10 @@ func NewNozzle(
 		stop:    make(chan struct{}),
 		done:    make(chan struct{}),
 
-		egressedCounter: noopCounter{},
-		droppedCounter:  noopCounter{},
+		egressedCounter:   noopCounter{},
+		droppedCounter:    noopCounter{},
+		ignoredEnvCounter: noopCounter{},
+		envConvertCounter: noopCounter{},
 	}
 
 	for _, o := range opts {
@@ -114,9 +137,13 @@ func (n *Nozzle) Start() error {
 
 	for {
 		for _, e := range stream() {
+			if !n.fromNamespace(e) {
+				n.ignoredEnvCounter.Inc()
+				continue
+			}
 			slm, err := e.Syslog()
 			if err != nil {
-				n.droppedCounter.Inc()
+				n.envConvertCounter.Inc()
 			}
 			for _, m := range slm {
 				// TODO: test io timeout to drive out conn.SetWriteDeadline()
@@ -143,4 +170,12 @@ func (n *Nozzle) Close() error {
 	close(n.stop)
 	<-n.done
 	return nil
+}
+
+func (n *Nozzle) fromNamespace(e *loggregator_v2.Envelope) bool {
+	if n.namespace == "" {
+		return true
+	}
+	ns := e.GetTags()["namespace"]
+	return ns == n.namespace
 }

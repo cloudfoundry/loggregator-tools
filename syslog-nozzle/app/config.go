@@ -8,6 +8,7 @@ type Config struct {
 
 	Destination string `env:"SYSLOG_DESTINATION, required, report"`
 	ShardID     string `env:"SHARD_ID,                     report"`
+	Namespace   string `env:"NAMESPACE,                    report"`
 }
 
 type LogsProviderTLS struct {

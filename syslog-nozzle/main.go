@@ -24,11 +24,21 @@ var (
 		Name: "syslog_nozzle_egress",
 		Help: "The count of messages written to syslog.",
 	})
+	ignoredCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "syslog_nozzle_ignored",
+		Help: "The count of envelopes ignored because of namespace mismatch",
+	})
+	convertCounter = prometheus.NewCounter(prometheus.CounterOpts{
+		Name: "syslog_nozzle_convert_err",
+		Help: "The count of envelopes ignored because it couldn't be converted to syslog",
+	})
 )
 
 func init() {
 	prometheus.MustRegister(droppedCounter)
 	prometheus.MustRegister(egressedCounter)
+	prometheus.MustRegister(ignoredCounter)
+	prometheus.MustRegister(convertCounter)
 }
 
 func main() {
@@ -64,8 +74,11 @@ func main() {
 		sc,
 		conf.Destination,
 		conf.ShardID,
+		app.WithNamespace(conf.Namespace),
 		app.WithEgressedCounter(egressedCounter),
 		app.WithDroppedCounter(droppedCounter),
+		app.WithIgnoredEnvelopeCounter(ignoredCounter),
+		app.WithConversionErrorCounter(convertCounter),
 	)
 	go nozzle.Start()
 
