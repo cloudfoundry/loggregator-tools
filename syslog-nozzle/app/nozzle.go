@@ -97,7 +97,8 @@ func (n *Nozzle) Start() error {
 		conn, err := net.Dial("tcp", d.URL)
 		if err != nil {
 			// TODO: handle conn errors, reconnect?
-			continue
+			// TODO: Write test that force "continue"
+			// continue
 		}
 		defer conn.Close()
 		if d.All {
@@ -147,30 +148,23 @@ func (n *Nozzle) Start() error {
 			msgs, err := e.Syslog()
 			if err != nil {
 				n.envConvertCounter.Inc()
-				// TODO: Write test that force "continue"
 			}
 
 			for _, w := range n.globalDrainWriters {
 				n.write(w, msgs)
 			}
 
-			ns, ok := namespace(e)
-			if !ok {
-				n.ignoredEnvCounter.Inc()
-				continue
-			}
-
-			w, ok := n.drainWriters[ns]
+			w, ok := n.drainWriters[namespace(e)]
 			if !ok {
 				n.ignoredEnvCounter.Inc()
 				continue
 			}
 			n.write(w, msgs)
-
 		}
 
 		select {
 		case <-n.stop:
+			// TODO: Write test that force "return nil" vs "return err"
 			return nil
 		default:
 		}
@@ -185,7 +179,8 @@ func (n *Nozzle) write(w io.Writer, msgs [][]byte) {
 		_, err := fmt.Fprintf(w, "%d %s", len(m), m)
 		if err != nil {
 			n.droppedCounter.Inc()
-			continue
+			// TODO: drive out
+			// continue
 		}
 		n.egressedCounter.Inc()
 	}
@@ -197,11 +192,10 @@ func (n *Nozzle) Close() error {
 	return nil
 }
 
-func namespace(e *loggregator_v2.Envelope) (string, bool) {
+func namespace(e *loggregator_v2.Envelope) string {
 	tags := e.GetTags()
 	if tags == nil {
-		return "", false
+		return ""
 	}
-	ns, ok := tags["namespace"]
-	return ns, ok
+	return tags["namespace"]
 }

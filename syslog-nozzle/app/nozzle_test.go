@@ -3,6 +3,8 @@ package app_test
 import (
 	"bufio"
 	"context"
+	"io"
+	"io/ioutil"
 	"net"
 	"runtime"
 	"sync"
@@ -104,7 +106,10 @@ var _ = Describe("Nozzle", func() {
 
 		go nozzle.Start()
 
+		conn := spyDrain.accept()
 		err := nozzle.Close()
+		Expect(err).ToNot(HaveOccurred())
+		_, err = io.Copy(ioutil.Discard, conn)
 		Expect(err).ToNot(HaveOccurred())
 		end := runtime.NumGoroutine()
 		Expect(start).To(Equal(end))
@@ -112,7 +117,7 @@ var _ = Describe("Nozzle", func() {
 	})
 
 	It("drops messages that are not able to be encoded as syslog", func() {
-		spyStreamConnector, _, _, _, spyConversionErrorCounter := setupSpies()
+		spyStreamConnector, _, _, _, _ := setupSpies()
 		spyDrain := newSpyDrain()
 		defer spyDrain.stop()
 
@@ -125,7 +130,6 @@ var _ = Describe("Nozzle", func() {
 				},
 			},
 			"",
-			app.WithConversionErrorCounter(spyConversionErrorCounter),
 		)
 		spyStreamConnector.addEnvelope("test-source-id-1")
 		spyStreamConnector.addEnvelope("\x01")
@@ -137,6 +141,87 @@ var _ = Describe("Nozzle", func() {
 		spyDrain.expectReceived(
 			"58 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-1 - - - \n",
 			"58 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-2 - - - \n",
+		)
+	})
+
+	It("makes the appropriate request to the rlp", func() {
+		spyStreamConnector, _, _, _, _ := setupSpies()
+		spyDrain := newSpyDrain()
+		defer spyDrain.stop()
+
+		nozzle := app.NewNozzle(
+			spyStreamConnector,
+			[]app.Drain{
+				{
+					All: true,
+					URL: spyDrain.url(),
+				},
+			},
+			"some-shard-id",
+		)
+
+		go nozzle.Start()
+		defer nozzle.Close()
+
+		Eventually(spyStreamConnector.requests).Should(ConsistOf(
+			&loggregator_v2.EgressBatchRequest{
+				ShardId: "some-shard-id",
+				Selectors: []*loggregator_v2.Selector{
+					{
+						Message: &loggregator_v2.Selector_Log{
+							Log: &loggregator_v2.LogSelector{},
+						},
+					},
+					{
+						Message: &loggregator_v2.Selector_Counter{
+							Counter: &loggregator_v2.CounterSelector{},
+						},
+					},
+					{
+						Message: &loggregator_v2.Selector_Gauge{
+							Gauge: &loggregator_v2.GaugeSelector{},
+						},
+					},
+					{
+						Message: &loggregator_v2.Selector_Timer{
+							Timer: &loggregator_v2.TimerSelector{},
+						},
+					},
+					{
+						Message: &loggregator_v2.Selector_Event{
+							Event: &loggregator_v2.EventSelector{},
+						},
+					},
+				},
+				UsePreferredTags: true,
+			},
+		))
+	})
+
+	It("writes msgs once to the global writer if namespace and all are set", func() {
+		spyStreamConnector, _, _, _, _ := setupSpies()
+		spyDrain := newSpyDrain()
+		defer spyDrain.stop()
+
+		nozzle := app.NewNozzle(
+			spyStreamConnector,
+			[]app.Drain{
+				{
+					All:       true,
+					Namespace: "ns1",
+					URL:       spyDrain.url(),
+				},
+			},
+			"some-shard-id",
+		)
+
+		spyStreamConnector.addEnvelope("ns1/rt1/rn1", map[string]string{"namespace": "ns1"})
+
+		go nozzle.Start()
+		defer nozzle.Close()
+
+		spyDrain.expectReceivedOnly(
+			`80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt1/rn1 - - [tags@47450 namespace="ns1"] ` + "\n",
 		)
 	})
 
@@ -406,4 +491,23 @@ func (s *spyDrain) expectReceived(msgs ...string) {
 		Expect(err).ToNot(HaveOccurred())
 		Expect(actual).To(Equal(expected))
 	}
+}
+
+func (s *spyDrain) expectReceivedOnly(msgs ...string) {
+	conn := s.accept()
+	defer conn.Close()
+	buf := bufio.NewReader(conn)
+
+	for _, expected := range msgs {
+		actual, err := buf.ReadString('\n')
+		Expect(err).ToNot(HaveOccurred())
+		Expect(actual).To(Equal(expected))
+	}
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		buf.ReadString('\n')
+	}()
+	Consistently(done).ShouldNot(BeClosed(), "more messages received than intended")
 }
