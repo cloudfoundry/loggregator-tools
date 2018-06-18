@@ -72,9 +72,8 @@ func main() {
 
 	nozzle := app.NewNozzle(
 		sc,
-		conf.Destination,
+		conf.Drains,
 		conf.ShardID,
-		app.WithNamespace(conf.Namespace),
 		app.WithEgressedCounter(egressedCounter),
 		app.WithDroppedCounter(droppedCounter),
 		app.WithIgnoredCounter(ignoredCounter),

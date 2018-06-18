@@ -1,14 +1,27 @@
 package app
 
+import "encoding/json"
+
+type Drain struct {
+	Namespace string `json:"namespace"`
+	URL       string `json:"url"`
+	All       bool   `json:"all"`
+}
+
+type Drains []Drain
+
+func (d *Drains) UnmarshalEnv(data string) error {
+	return json.Unmarshal([]byte(data), d)
+}
+
 type Config struct {
 	LogsProviderAddr string `env:"LOGS_PROVIDER_ADDR, required, report"`
 	LogsProviderTLS  LogsProviderTLS
 
 	MetricsAddr string `env:"METRICS_ADDR, report"`
 
-	Destination string `env:"SYSLOG_DESTINATION, required, report"`
-	ShardID     string `env:"SHARD_ID,                     report"`
-	Namespace   string `env:"NAMESPACE,                    report"`
+	ShardID string `env:"SHARD_ID, report"`
+	Drains  Drains `env:"DRAINS,   report"`
 }
 
 type LogsProviderTLS struct {

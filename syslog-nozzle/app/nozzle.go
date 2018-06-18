@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"io"
 	"net"
 
 	loggregator "code.cloudfoundry.org/go-loggregator"
@@ -17,10 +18,11 @@ type noopCounter struct {
 func (noopCounter) Inc() {}
 
 type Nozzle struct {
-	sc        StreamConnector
-	addr      string
-	shardID   string
-	namespace string
+	sc                 StreamConnector
+	drains             []Drain
+	drainWriters       map[string]io.Writer
+	globalDrainWriters []io.Writer
+	shardID            string
 
 	stop chan struct{}
 	done chan struct{}
@@ -36,12 +38,6 @@ type StreamConnector interface {
 }
 
 type NozzleOption func(*Nozzle)
-
-func WithNamespace(ns string) NozzleOption {
-	return func(n *Nozzle) {
-		n.namespace = ns
-	}
-}
 
 func WithEgressedCounter(c prometheus.Counter) NozzleOption {
 	return func(n *Nozzle) {
@@ -69,15 +65,17 @@ func WithConversionErrorCounter(c prometheus.Counter) NozzleOption {
 
 func NewNozzle(
 	sc StreamConnector,
-	syslogAddr, shardID string,
+	drains []Drain,
+	shardID string,
 	opts ...NozzleOption,
 ) *Nozzle {
 	n := &Nozzle{
-		sc:      sc,
-		addr:    syslogAddr,
-		shardID: shardID,
-		stop:    make(chan struct{}),
-		done:    make(chan struct{}),
+		sc:           sc,
+		drains:       drains,
+		drainWriters: make(map[string]io.Writer),
+		shardID:      shardID,
+		stop:         make(chan struct{}),
+		done:         make(chan struct{}),
 
 		egressedCounter:   noopCounter{},
 		droppedCounter:    noopCounter{},
@@ -95,9 +93,18 @@ func NewNozzle(
 func (n *Nozzle) Start() error {
 	defer close(n.done)
 
-	conn, err := net.Dial("tcp", n.addr)
-	if err != nil {
-		return err
+	for _, d := range n.drains {
+		conn, err := net.Dial("tcp", d.URL)
+		if err != nil {
+			// TODO: handle conn errors, reconnect?
+			continue
+		}
+		defer conn.Close()
+		if d.All {
+			n.globalDrainWriters = append(n.globalDrainWriters, conn)
+			continue
+		}
+		n.drainWriters[d.Namespace] = conn
 	}
 
 	req := &loggregator_v2.EgressBatchRequest{
@@ -137,25 +144,29 @@ func (n *Nozzle) Start() error {
 
 	for {
 		for _, e := range stream() {
-			if !n.fromNamespace(e) {
+			msgs, err := e.Syslog()
+			if err != nil {
+				n.envConvertCounter.Inc()
+				// TODO: Write test that force "continue"
+			}
+
+			for _, w := range n.globalDrainWriters {
+				n.write(w, msgs)
+			}
+
+			ns, ok := namespace(e)
+			if !ok {
 				n.ignoredEnvCounter.Inc()
 				continue
 			}
-			slm, err := e.Syslog()
-			if err != nil {
-				n.envConvertCounter.Inc()
+
+			w, ok := n.drainWriters[ns]
+			if !ok {
+				// TODO
+				continue
 			}
-			for _, m := range slm {
-				// TODO: test io timeout to drive out conn.SetWriteDeadline()
-				// TODO: what happens if we write a partial message, we
-				//       probably shouldn't reuse the conn
-				_, err := fmt.Fprintf(conn, "%d %s", len(m), m)
-				if err != nil {
-					n.droppedCounter.Inc()
-					continue
-				}
-				n.egressedCounter.Inc()
-			}
+			n.write(w, msgs)
+
 		}
 
 		select {
@@ -166,16 +177,31 @@ func (n *Nozzle) Start() error {
 	}
 }
 
+func (n *Nozzle) write(w io.Writer, msgs [][]byte) {
+	for _, m := range msgs {
+		// TODO: test io timeout to drive out conn.SetWriteDeadline()
+		// TODO: what happens if we write a partial message, we
+		//       probably shouldn't reuse the conn
+		_, err := fmt.Fprintf(w, "%d %s", len(m), m)
+		if err != nil {
+			n.droppedCounter.Inc()
+			continue
+		}
+		n.egressedCounter.Inc()
+	}
+}
+
 func (n *Nozzle) Close() error {
 	close(n.stop)
 	<-n.done
 	return nil
 }
 
-func (n *Nozzle) fromNamespace(e *loggregator_v2.Envelope) bool {
-	if n.namespace == "" {
-		return true
+func namespace(e *loggregator_v2.Envelope) (string, bool) {
+	tags := e.GetTags()
+	if tags == nil {
+		return "", false
 	}
-	ns := e.GetTags()["namespace"]
-	return ns == n.namespace
+	ns, ok := tags["namespace"]
+	return ns, ok
 }

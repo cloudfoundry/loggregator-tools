@@ -26,9 +26,15 @@ var _ = Describe("Nozzle", func() {
 		syslogAddr := syslogListener.Addr().String()
 		spyEgressedCounter := &spyCounter{}
 		spyIgnoredCounter := &spyCounter{}
+		drains := []app.Drain{
+			{
+				All: true,
+				URL: syslogAddr,
+			},
+		}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
-			syslogAddr,
+			drains,
 			"some-shard-id",
 			app.WithEgressedCounter(spyEgressedCounter),
 			app.WithIgnoredCounter(spyIgnoredCounter),
@@ -65,8 +71,10 @@ var _ = Describe("Nozzle", func() {
 		}()
 		Eventually(errs).Should(HaveLen(0))
 		Eventually(msgs).Should(HaveLen(3))
+
 		expected := fmt.Sprintf("85 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-1 - - [tags@47450 namespace=\"ns1\"] \n")
-		Expect(<-msgs).To(Equal(expected))
+		result := <-msgs
+		Expect(result).To(Equal(expected))
 		expected = fmt.Sprintf("85 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-2 - - [tags@47450 namespace=\"ns2\"] \n")
 		Expect(<-msgs).To(Equal(expected))
 		expected = fmt.Sprintf("85 <14>1 1970-01-01T00:00:00+00:00 - test-source-id-3 - - [tags@47450 namespace=\"ns3\"] \n")
@@ -76,61 +84,74 @@ var _ = Describe("Nozzle", func() {
 		Expect(spyIgnoredCounter.read()).To(Equal(0))
 	})
 
-	It("sends logs for the specified namespace to syslog", func() {
+	It("routes namespace logs to the specified drains", func() {
 		spyStreamConnector := newSpyStreamConnector()
-		syslogListener, err := net.Listen("tcp", ":0")
+		syslogListener1, err := net.Listen("tcp", ":0")
+		syslogListener2, err := net.Listen("tcp", ":0")
 		Expect(err).ToNot(HaveOccurred())
-		defer syslogListener.Close()
-		syslogAddr := syslogListener.Addr().String()
+		defer syslogListener1.Close()
+		defer syslogListener2.Close()
+		syslogAddr1 := syslogListener1.Addr().String()
+		syslogAddr2 := syslogListener2.Addr().String()
+
 		spyEgressCounter := &spyCounter{}
 		spyIgnoredCounter := &spyCounter{}
+		drains := []app.Drain{
+			{
+				Namespace: "ns1",
+				URL:       syslogAddr1,
+			},
+			{
+				Namespace: "ns2",
+				URL:       syslogAddr2,
+			},
+		}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
-			syslogAddr,
+			drains,
 			"some-shard-id",
 			app.WithEgressedCounter(spyEgressCounter),
 			app.WithIgnoredCounter(spyIgnoredCounter),
-			app.WithNamespace("ns1"),
 		)
 
 		spyStreamConnector.addEnvelopeWithTags(0, "ns1/rt1/rn1", map[string]string{"namespace": "ns1"})
+		spyStreamConnector.addEnvelope(0, "ns1/rt1/rn1")
 		spyStreamConnector.addEnvelopeWithTags(0, "ns2/rt1/rn1", map[string]string{"namespace": "ns2"})
 		spyStreamConnector.addEnvelopeWithTags(0, "ns1/rt2/rn2", map[string]string{"namespace": "ns1"})
 
 		go nozzle.Start()
 		defer nozzle.Close()
 
-		conn, err := syslogListener.Accept()
-		Expect(err).ToNot(HaveOccurred())
-		buf := bufio.NewReader(conn)
+		Eventually(spyStreamConnector.requests).Should(HaveLen(1))
+		Consistently(spyStreamConnector.requests).Should(HaveLen(1))
 
-		errs := make(chan error, 100)
-		msgs := make(chan string, 100)
-		done := make(chan struct{})
-		defer close(done)
-		go func() {
-			for {
-				select {
-				case <-done:
-					return
-				default:
-					actual, err := buf.ReadString('\n')
-					if err != nil {
-						errs <- err
-					}
-					msgs <- actual
-				}
-			}
+		{
+			conn, err := syslogListener1.Accept()
+			Expect(err).ToNot(HaveOccurred())
+			buf := bufio.NewReader(conn)
 
-		}()
-		Eventually(msgs).Should(HaveLen(2))
-		Eventually(errs).Should(HaveLen(0))
-		expected := fmt.Sprintf("80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt1/rn1 - - [tags@47450 namespace=\"ns1\"] \n")
-		Expect(<-msgs).To(Equal(expected))
-		expected = fmt.Sprintf("80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt2/rn2 - - [tags@47450 namespace=\"ns1\"] \n")
-		Expect(<-msgs).To(Equal(expected))
+			msg, err := buf.ReadString('\n')
+			Expect(err).ToNot(HaveOccurred())
+			expected := fmt.Sprintf("80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt1/rn1 - - [tags@47450 namespace=\"ns1\"] \n")
+			Expect(msg).To(Equal(expected))
 
-		Expect(spyEgressCounter.read()).To(Equal(2))
+			msg, err = buf.ReadString('\n')
+			Expect(err).ToNot(HaveOccurred())
+			expected = fmt.Sprintf("80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt2/rn2 - - [tags@47450 namespace=\"ns1\"] \n")
+			Expect(msg).To(Equal(expected))
+		}
+		{
+			conn, err := syslogListener2.Accept()
+			Expect(err).ToNot(HaveOccurred())
+			buf := bufio.NewReader(conn)
+
+			msg, err := buf.ReadString('\n')
+			Expect(err).ToNot(HaveOccurred())
+			expected := fmt.Sprintf("80 <14>1 1970-01-01T00:00:00+00:00 - ns2/rt1/rn1 - - [tags@47450 namespace=\"ns2\"] \n")
+			Expect(msg).To(Equal(expected))
+		}
+
+		Expect(spyEgressCounter.read()).To(Equal(3))
 		Expect(spyIgnoredCounter.read()).To(Equal(1))
 	})
 
@@ -140,9 +161,15 @@ var _ = Describe("Nozzle", func() {
 		Expect(err).ToNot(HaveOccurred())
 		defer syslogListener.Close()
 		syslogAddr := syslogListener.Addr().String()
+		drains := []app.Drain{
+			{
+				All: true,
+				URL: syslogAddr,
+			},
+		}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
-			syslogAddr,
+			drains,
 			"some-shard-id",
 		)
 		start := runtime.NumGoroutine()
@@ -163,9 +190,15 @@ var _ = Describe("Nozzle", func() {
 		defer syslogListener.Close()
 		syslogAddr := syslogListener.Addr().String()
 		spyCounter := &spyCounter{}
+		drains := []app.Drain{
+			{
+				All: true,
+				URL: syslogAddr,
+			},
+		}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
-			syslogAddr,
+			drains,
 			"some-shard-id",
 			app.WithConversionErrorCounter(spyCounter),
 		)
@@ -200,9 +233,15 @@ var _ = Describe("Nozzle", func() {
 		syslogAddr := syslogListener.Addr().String()
 		spyEgressedCounter := &spyCounter{}
 		spyDroppedCounter := &spyCounter{}
+		drains := []app.Drain{
+			{
+				All: true,
+				URL: syslogAddr,
+			},
+		}
 		nozzle := app.NewNozzle(
 			spyStreamConnector,
-			syslogAddr,
+			drains,
 			"some-shard-id",
 			app.WithEgressedCounter(spyEgressedCounter),
 			app.WithDroppedCounter(spyDroppedCounter),
@@ -227,16 +266,6 @@ var _ = Describe("Nozzle", func() {
 		spyStreamConnector.addEnvelope(0, "test-source-id-3")
 
 		Eventually(spyDroppedCounter.read).Should(Equal(3))
-	})
-
-	It("returns error when unable to connect to syslog destination", func() {
-		nozzle := app.NewNozzle(
-			newSpyStreamConnector(),
-			"unknown-syslog-addr",
-			"some-shard-id",
-		)
-
-		Expect(nozzle.Start()).ToNot(Succeed())
 	})
 })
 
