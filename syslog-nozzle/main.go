@@ -77,7 +77,7 @@ func main() {
 		app.WithNamespace(conf.Namespace),
 		app.WithEgressedCounter(egressedCounter),
 		app.WithDroppedCounter(droppedCounter),
-		app.WithIgnoredEnvelopeCounter(ignoredCounter),
+		app.WithIgnoredCounter(ignoredCounter),
 		app.WithConversionErrorCounter(convertCounter),
 	)
 	go nozzle.Start()

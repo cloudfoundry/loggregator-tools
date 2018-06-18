@@ -31,7 +31,7 @@ var _ = Describe("Nozzle", func() {
 			syslogAddr,
 			"some-shard-id",
 			app.WithEgressedCounter(spyEgressedCounter),
-			app.WithIgnoredEnvelopeCounter(spyIgnoredCounter),
+			app.WithIgnoredCounter(spyIgnoredCounter),
 		)
 		spyStreamConnector.addEnvelopeWithTags(0, "test-source-id-1", map[string]string{"namespace": "ns1"})
 		spyStreamConnector.addEnvelopeWithTags(0, "test-source-id-2", map[string]string{"namespace": "ns2"})
@@ -89,7 +89,7 @@ var _ = Describe("Nozzle", func() {
 			syslogAddr,
 			"some-shard-id",
 			app.WithEgressedCounter(spyEgressCounter),
-			app.WithIgnoredEnvelopeCounter(spyIgnoredCounter),
+			app.WithIgnoredCounter(spyIgnoredCounter),
 			app.WithNamespace("ns1"),
 		)
 

@@ -55,7 +55,7 @@ func WithDroppedCounter(c prometheus.Counter) NozzleOption {
 	}
 }
 
-func WithIgnoredEnvelopeCounter(c prometheus.Counter) NozzleOption {
+func WithIgnoredCounter(c prometheus.Counter) NozzleOption {
 	return func(n *Nozzle) {
 		n.ignoredEnvCounter = c
 	}
