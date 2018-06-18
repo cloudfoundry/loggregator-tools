@@ -162,7 +162,7 @@ func (n *Nozzle) Start() error {
 
 			w, ok := n.drainWriters[ns]
 			if !ok {
-				// TODO
+				n.ignoredEnvCounter.Inc()
 				continue
 			}
 			n.write(w, msgs)
