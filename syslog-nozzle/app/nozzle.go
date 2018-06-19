@@ -154,7 +154,7 @@ func (n *Nozzle) Start() error {
 				n.write(w, msgs)
 			}
 
-			w, ok := n.drainWriters[namespace(e)]
+			w, ok := n.drainWriters[e.GetTags()["namespace"]]
 			if !ok {
 				n.ignoredEnvCounter.Inc()
 				continue
@@ -190,12 +190,4 @@ func (n *Nozzle) Close() error {
 	close(n.stop)
 	<-n.done
 	return nil
-}
-
-func namespace(e *loggregator_v2.Envelope) string {
-	tags := e.GetTags()
-	if tags == nil {
-		return ""
-	}
-	return tags["namespace"]
 }
