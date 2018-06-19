@@ -76,6 +76,15 @@ received in the log stream. This is one way to measure message reliability of
 the Loggregator system. The results of this test are displayed in a simple UI
 and available via JSON and the Firehose.
 
+## [Syslog Nozzle][syslog-nozzle]
+This is a nozzle that converts envelopes into syslog messages. This is meant
+to be deployed in Kubernetes.
+The dockerfile for packaging this app is located
+[here][syslog-nozzle-dockerfile].
+The kubernetes deployment manifest and instructions for configuring it can be
+found [here][syslog-nozzle-k8s-deployment].
+
+
 [https-drain]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/https_drain
 [syslog-drain]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/syslog_drain
 [cf-syslog-drain-release]: https://github.com/cloudfoundry/cf-syslog-drain-release
@@ -90,3 +99,6 @@ and available via JSON and the Firehose.
 [postprinter]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/postprinter
 [datadog-forwarder]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/log-cache-forwarders/datadog
 [cf-logmon]: https://github.com/cloudfoundry-incubator/cf-logmon
+[syslog-nozzle]: https://github.com/cloudfoundry-incubator/loggregator-tools/tree/master/syslog-nozzle
+[syslog-nozzle-dockerfile]:https://github.com/cloudfoundry/loggregator-ci/blob/master/docker-images/syslog-nozzle/Dockerfile
+[syslog-nozzle-k8s-deployment]:https://github.com/cloudfoundry-incubator/loggregator-k8s-deployment/blob/master/optional/deployments/syslog-nozzle.yml
