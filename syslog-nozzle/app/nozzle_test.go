@@ -2,12 +2,15 @@ package app_test
 
 import (
 	"bufio"
+	"bytes"
 	"context"
 	"io"
 	"io/ioutil"
 	"net"
 	"runtime"
 	"sync"
+	"sync/atomic"
+	"time"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -104,12 +107,27 @@ var _ = Describe("Nozzle", func() {
 		)
 		start := runtime.NumGoroutine()
 
-		go nozzle.Start()
+		go func() {
+			defer GinkgoRecover()
+			err := nozzle.Start()
+			Expect(err).ToNot(HaveOccurred())
+		}()
 
 		conn := spyDrain.accept()
-		err := nozzle.Close()
-		Expect(err).ToNot(HaveOccurred())
-		_, err = io.Copy(ioutil.Discard, conn)
+
+		spyStreamConnector.block()
+		done := make(chan struct{})
+		go func() {
+			defer GinkgoRecover()
+			defer close(done)
+			err := nozzle.Close()
+			Expect(err).ToNot(HaveOccurred())
+		}()
+		Consistently(done).ShouldNot(BeClosed())
+		spyStreamConnector.unblock()
+		Eventually(done).Should(BeClosed())
+
+		_, err := io.Copy(ioutil.Discard, conn)
 		Expect(err).ToNot(HaveOccurred())
 		end := runtime.NumGoroutine()
 		Expect(start).To(Equal(end))
@@ -198,7 +216,7 @@ var _ = Describe("Nozzle", func() {
 		))
 	})
 
-	It("writes msgs once to the global writer if namespace and all are set", func() {
+	It("writes msgs once to the global writer if namespace and all are both set", func() {
 		spyStreamConnector, _, _, _, _ := setupSpies()
 		spyDrain := newSpyDrain()
 		defer spyDrain.stop()
@@ -212,7 +230,7 @@ var _ = Describe("Nozzle", func() {
 					URL:       spyDrain.url(),
 				},
 			},
-			"some-shard-id",
+			"",
 		)
 
 		spyStreamConnector.addEnvelope("ns1/rt1/rn1", map[string]string{"namespace": "ns1"})
@@ -223,6 +241,89 @@ var _ = Describe("Nozzle", func() {
 		spyDrain.expectReceivedOnly(
 			`80 <14>1 1970-01-01T00:00:00+00:00 - ns1/rt1/rn1 - - [tags@47450 namespace="ns1"] ` + "\n",
 		)
+	})
+
+	It("doesn't freak out when it can't connect to a syslog drain", func() {
+		spyStreamConnector, _, _, _, _ := setupSpies()
+		spyDrain := newSpyDrain()
+		spyDrain.stop()
+
+		nozzle := app.NewNozzle(
+			spyStreamConnector,
+			[]app.Drain{
+				{
+					Namespace: "ns1",
+					URL:       spyDrain.url(),
+				},
+			},
+			"",
+		)
+
+		spyStreamConnector.addEnvelope("ns1/rt1/rn1", map[string]string{"namespace": "ns1"})
+
+		go nozzle.Start()
+		defer nozzle.Close()
+	})
+
+	It("timesout writes to slow readers", func() {
+		spyStreamConnector, _, _, _, _ := setupSpies()
+		spyStreamConnector.alwaysReturn = []*loggregator_v2.Envelope{
+			{
+				Message: &loggregator_v2.Envelope_Log{
+					Log: &loggregator_v2.Log{
+						Payload: bytes.Repeat([]byte("a"), 2^42),
+					},
+				},
+				Tags: map[string]string{
+					"namespace": "ns1",
+				},
+			},
+		}
+		slowDrain := newSpyDrain()
+		defer slowDrain.stop()
+		fastDrain := newSpyDrain()
+		defer fastDrain.stop()
+
+		nozzle := app.NewNozzle(
+			spyStreamConnector,
+			[]app.Drain{
+				{
+					All: true,
+					URL: slowDrain.url(),
+				},
+				{
+					Namespace: "ns1",
+					URL:       fastDrain.url(),
+				},
+			},
+			"",
+		)
+
+		go nozzle.Start()
+		defer nozzle.Close()
+
+		slowConn := slowDrain.accept()
+		defer slowConn.Close()
+		fastConn := fastDrain.accept()
+		defer fastConn.Close()
+
+		timer := time.NewTimer(time.Second)
+		go func() {
+			for {
+				b := make([]byte, 2048)
+				slowConn.Read(b)
+				time.Sleep(500 * time.Millisecond)
+			}
+		}()
+		go func() {
+			for {
+				b := make([]byte, 2048)
+				fastConn.Read(b)
+				timer.Reset(time.Second)
+			}
+		}()
+
+		Consistently(timer.C, "2s").ShouldNot(Receive())
 	})
 
 	Describe("metrics", func() {
@@ -323,6 +424,7 @@ var _ = Describe("Nozzle", func() {
 
 			spyStreamConnector.addEnvelope("test-source-id-1")
 			Eventually(spyEgressedCounter.read).Should(Equal(1))
+			Consistently(spyDroppedCounter.read).Should(Equal(0))
 
 			conn := spyDrain.accept()
 			err := conn.Close()
@@ -334,6 +436,7 @@ var _ = Describe("Nozzle", func() {
 			spyStreamConnector.addEnvelope("test-source-id-3")
 
 			Eventually(spyDroppedCounter.read).Should(Equal(3))
+			Consistently(spyEgressedCounter.read).Should(Equal(1))
 		})
 
 		It("increments conversion error counter when envelope cannot be converted to syslog", func() {
@@ -363,10 +466,12 @@ var _ = Describe("Nozzle", func() {
 })
 
 type spyStreamConnector struct {
-	mu        sync.Mutex
-	requests_ []*loggregator_v2.EgressBatchRequest
-	contexts_ []context.Context
-	envelopes chan []*loggregator_v2.Envelope
+	block_       uint64
+	mu           sync.Mutex
+	requests_    []*loggregator_v2.EgressBatchRequest
+	contexts_    []context.Context
+	envelopes    chan []*loggregator_v2.Envelope
+	alwaysReturn []*loggregator_v2.Envelope
 }
 
 func newSpyStreamConnector() *spyStreamConnector {
@@ -382,13 +487,30 @@ func (s *spyStreamConnector) Stream(ctx context.Context, req *loggregator_v2.Egr
 	s.contexts_ = append(s.contexts_, ctx)
 
 	return func() []*loggregator_v2.Envelope {
+		if s.alwaysReturn != nil {
+			return s.alwaysReturn
+		}
+
 		select {
 		case e := <-s.envelopes:
 			return e
 		default:
-			return nil
+			for {
+				if atomic.LoadUint64(&s.block_) == 0 {
+					return nil
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
 		}
 	}
+}
+
+func (s *spyStreamConnector) block() {
+	atomic.StoreUint64(&s.block_, 1)
+}
+
+func (s *spyStreamConnector) unblock() {
+	atomic.StoreUint64(&s.block_, 0)
 }
 
 func (s *spyStreamConnector) requests() []*loggregator_v2.EgressBatchRequest {

@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
-	"io"
 	"net"
+	"time"
 
 	loggregator "code.cloudfoundry.org/go-loggregator"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
@@ -18,11 +18,11 @@ type noopCounter struct {
 func (noopCounter) Inc() {}
 
 type Nozzle struct {
-	sc                 StreamConnector
-	drains             []Drain
-	drainWriters       map[string]io.Writer
-	globalDrainWriters []io.Writer
-	shardID            string
+	sc               StreamConnector
+	drains           []Drain
+	drainConns       map[string]net.Conn
+	globalDrainConns []net.Conn
+	shardID          string
 
 	stop chan struct{}
 	done chan struct{}
@@ -70,12 +70,12 @@ func NewNozzle(
 	opts ...NozzleOption,
 ) *Nozzle {
 	n := &Nozzle{
-		sc:           sc,
-		drains:       drains,
-		drainWriters: make(map[string]io.Writer),
-		shardID:      shardID,
-		stop:         make(chan struct{}),
-		done:         make(chan struct{}),
+		sc:         sc,
+		drains:     drains,
+		drainConns: make(map[string]net.Conn),
+		shardID:    shardID,
+		stop:       make(chan struct{}),
+		done:       make(chan struct{}),
 
 		egressedCounter:   noopCounter{},
 		droppedCounter:    noopCounter{},
@@ -96,16 +96,15 @@ func (n *Nozzle) Start() error {
 	for _, d := range n.drains {
 		conn, err := net.Dial("tcp", d.URL)
 		if err != nil {
-			// TODO: handle conn errors, reconnect?
-			// TODO: Write test that force "continue"
-			// continue
+			// TODO: We should trigger reconnect here vs ignoring the drain.
+			continue
 		}
 		defer conn.Close()
 		if d.All {
-			n.globalDrainWriters = append(n.globalDrainWriters, conn)
+			n.globalDrainConns = append(n.globalDrainConns, conn)
 			continue
 		}
-		n.drainWriters[d.Namespace] = conn
+		n.drainConns[d.Namespace] = conn
 	}
 
 	req := &loggregator_v2.EgressBatchRequest{
@@ -150,37 +149,35 @@ func (n *Nozzle) Start() error {
 				n.envConvertCounter.Inc()
 			}
 
-			for _, w := range n.globalDrainWriters {
-				n.write(w, msgs)
+			for _, c := range n.globalDrainConns {
+				n.write(c, msgs)
 			}
 
-			w, ok := n.drainWriters[e.GetTags()["namespace"]]
+			c, ok := n.drainConns[e.GetTags()["namespace"]]
 			if !ok {
 				n.ignoredEnvCounter.Inc()
 				continue
 			}
-			n.write(w, msgs)
+			n.write(c, msgs)
 		}
 
 		select {
 		case <-n.stop:
-			// TODO: Write test that force "return nil" vs "return err"
 			return nil
 		default:
 		}
 	}
 }
 
-func (n *Nozzle) write(w io.Writer, msgs [][]byte) {
+func (n *Nozzle) write(conn net.Conn, msgs [][]byte) {
 	for _, m := range msgs {
-		// TODO: test io timeout to drive out conn.SetWriteDeadline()
-		// TODO: what happens if we write a partial message, we
-		//       probably shouldn't reuse the conn
-		_, err := fmt.Fprintf(w, "%d %s", len(m), m)
+		conn.SetWriteDeadline(time.Now().Add(5 * time.Millisecond))
+		_, err := fmt.Fprintf(conn, "%d %s", len(m), m)
 		if err != nil {
+			// TODO: When we get an error back from writing to conn, we should
+			// probably reconnect.
 			n.droppedCounter.Inc()
-			// TODO: drive out
-			// continue
+			continue
 		}
 		n.egressedCounter.Inc()
 	}
