@@ -14,8 +14,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
+	loggregator "code.cloudfoundry.org/go-loggregator"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator/plumbing"
 )
 
 var (
@@ -37,11 +37,10 @@ var (
 func main() {
 	flag.Parse()
 
-	tlsConfig, err := plumbing.NewClientMutualTLSConfig(
+	tlsConfig, err := loggregator.NewEgressTLSConfig(
+		*caFile,
 		*certFile,
 		*keyFile,
-		*caFile,
-		"reverselogproxy",
 	)
 	if err != nil {
 		log.Fatal(err)
