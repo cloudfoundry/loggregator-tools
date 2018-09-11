@@ -3,13 +3,19 @@ function login {
     checkpoint "Logging into CF"
 
     if [ "${login_has_occurred:-}" = "" ]; then
-        cf login \
-            -a api."$CF_SYSTEM_DOMAIN" \
-            -u "$CF_USERNAME" \
-            -p "$CF_PASSWORD" \
-            -s "$CF_SPACE" \
-            -o "$CF_ORG" \
-            --skip-ssl-validation # TODO: consider passing this in as a param
+        if [ "$USE_CLIENT_AUTH" == "false" ]; then
+            cf login \
+                -a api."$CF_SYSTEM_DOMAIN" \
+                -u "$CF_USERNAME" \
+                -p "$CF_PASSWORD" \
+                -s "$CF_SPACE" \
+                -o "$CF_ORG" \
+                --skip-ssl-validation # TODO: consider passing this in as a param
+        else
+            cf api api."$CF_SYSTEM_DOMAIN" --skip-ssl-validation
+            cf auth "$CF_USERNAME" "$CF_PASSWORD" --client-credentials
+            cf target -o "$CF_ORG" -s "$CF_SPACE"
+        fi
     fi
     export login_has_occurred=true
 }

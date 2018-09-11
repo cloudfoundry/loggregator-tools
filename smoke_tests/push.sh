@@ -10,6 +10,7 @@
 # CF_ORG: cf org for running test
 # CF_APP_DOMAIN: tcp or https app domain based on DRAIN_TYPE
 # SINK_DEPLOY: syslogs drain into a cf pushed app or our standalone TCP Server
+# USE_CLIENT_AUTH: use client auth for cf instead of user auth
 
 set -eu
 
