@@ -1,0 +1,16 @@
+---
+applications:
+- name: syslog-forwarder
+  memory: 1G
+  instances: 3
+  buildpack: binary_buildpack
+  command: ./run.sh
+  path: forwarder.zip
+  no-route: true
+  health-check-type: process
+  env:
+    SOURCE_HOSTNAME: test_hostname
+    INCLUDE_SERVICES: true
+    CACHE_SIZE: 0
+    SYSLOG_URL: https://api.coconut.cf-app.com
+
