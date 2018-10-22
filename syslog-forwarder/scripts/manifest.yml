@@ -11,6 +11,5 @@ applications:
   env:
     SOURCE_HOSTNAME: test_hostname
     INCLUDE_SERVICES: true
-    CACHE_SIZE: 0
     SYSLOG_URL: https://api.coconut.cf-app.com
 

@@ -8,5 +8,6 @@ pushd $git_root/syslog-forwarder/scripts
     cf set-env syslog-forwarder REFRESH_TOKEN "$(cat ~/.cf/config.json | jq -r .RefreshToken)"
     cf set-env syslog-forwarder CLIENT_ID "$(cat ~/.cf/config.json | jq -r .UAAOAuthClient)"
     cf set-env syslog-forwarder SKIP_SSL_VALIDATION "$(cat ~/.cf/config.json | jq -r .SSLDisabled)"
+    cf set-env syslog-forwarder CACHE_SIZE 0
     cf start syslog-forwarder
 popd
