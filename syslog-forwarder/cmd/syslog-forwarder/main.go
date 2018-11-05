@@ -1,17 +1,13 @@
 package main
 
 import (
-	"expvar"
 	"log"
-	"net/http"
 	"os"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 	loggregator "code.cloudfoundry.org/go-loggregator"
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	orchestrator "code.cloudfoundry.org/go-orchestrator"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/expvarfilter"
-	"code.cloudfoundry.org/loggregator-tools/log-cache-forwarders/pkg/metrics"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/stream"
 )
@@ -23,10 +19,6 @@ func main() {
 
 	cfg := LoadConfig()
 	envstruct.WriteReport(&cfg)
-
-	m := startMetricsEmit(l)
-	success := m.NewCounter("EgressSuccess")
-	failure := m.NewCounter("EgressFailure")
 
 	client := loggregator.NewRLPGatewayClient(cfg.Vcap.RLPAddr,
 		loggregator.WithRLPGatewayClientLogger(l),
@@ -55,10 +47,8 @@ func main() {
 		err := w.Write(e.(*loggregator_v2.Envelope))
 		if err != nil {
 			l.Printf("error writing envelope to syslog: %s", err)
-			failure(1)
 			continue
 		}
-		success(1)
 	}
 }
 
@@ -78,16 +68,4 @@ func createSyslogWriter(cfg Config, log *log.Logger) egress.WriteCloser {
 		SkipCertVerify: cfg.SkipCertVerify,
 	}
 	return egress.NewWriter(cfg.SourceHostname, cfg.SyslogURL, netConf, log)
-}
-
-func startMetricsEmit(log *log.Logger) *metrics.Metrics {
-	m := metrics.New(expvar.NewMap("SyslogForwarder"))
-
-	mh := expvarfilter.NewHandler(expvar.Handler(), []string{"SyslogForwarder"})
-	go func() {
-		// health endpoints (expvar)
-		log.Printf("Health: %s", http.ListenAndServe(":"+os.Getenv("PORT"), mh))
-	}()
-
-	return m
 }
