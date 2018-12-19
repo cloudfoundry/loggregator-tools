@@ -19,6 +19,7 @@ var (
 	certFile = flag.String("cert", "", "cert to use to connect for gRPC")
 	keyFile  = flag.String("key", "", "key to use to connect for gRPC")
 	caFile   = flag.String("ca", "", "ca cert to use to connect for gRPC")
+	srcID    = flag.String("source-id", "", "envelope source ID")
 )
 
 func main() {
@@ -37,6 +38,7 @@ func main() {
 
 	// create env
 	env := &loggregator_v2.Envelope{
+		SourceId: *srcID,
 		Message: &loggregator_v2.Envelope_Counter{
 			Counter: &loggregator_v2.Counter{
 				Name:  "some-counter",
