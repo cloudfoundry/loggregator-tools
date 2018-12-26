@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
-	"time"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
 )
@@ -24,6 +24,11 @@ func main() {
 
 	taskChan := make(chan Task)
 	ipChan := make(chan string, len(cfg.DrainIPs))
+
+	for _, ip := range cfg.DrainIPs {
+		ipChan <- ip
+	}
+
 	for i := 0; i < cfg.WorkerCount; i++ {
 		go func(idx int) {
 			defer wg.Done()
@@ -56,7 +61,6 @@ func main() {
 }
 
 type Config struct {
-	SystemDomain      string `env:"SYSTEM_DOMAIN,        required, report"`
 	APIEndpoint       string `env:"API_ENDPOINT,        required, report"`
 	SkipSSLValidation bool   `env:"SKIP_SSL_VALIDATION, report"`
 	Org               string `env:"ORG,                 required, report"`
@@ -72,10 +76,10 @@ type Config struct {
 	StartingSpaceID int    `env:"STARTING_SPACE_ID, report"`
 	EndingSpaceID   int    `env:"ENDING_SPACE_ID,   report"`
 
-	EmitInterval time.Duration `env:"EMIT_INTERVAL, required, report"`
-	DrainIPs     []string      `env:"DRAIN_IPS,     required, report"`
-	DrainCount   int           `env:"DRAIN_COUNT,             report"`
-	WorkerCount  int           `env:"WORKER_COUNT,            report"`
+	EmitInterval string   `env:"EMIT_INTERVAL, required, report"`
+	DrainIPs     []string `env:"DRAIN_IPS,     required, report"`
+	DrainCount   int      `env:"DRAIN_COUNT,             report"`
+	WorkerCount  int      `env:"WORKER_COUNT,            report"`
 }
 
 func (c Config) AppCount() int {
@@ -195,6 +199,8 @@ func NewCFExecutor(spaceID int, cfg Config) (*CFExecutor, error) {
 		login = append(login, "--skip-ssl-validation")
 	}
 
+	fmt.Printf("CF login to space: %s\n", space)
+
 	out, err := e.CF(login...)
 	if err != nil {
 		log.Printf("ERROR: %s", err)
@@ -203,10 +209,12 @@ func NewCFExecutor(spaceID int, cfg Config) (*CFExecutor, error) {
 		log.Println("STDERR:")
 		log.Println(out.Stdout.String())
 	}
+	fmt.Println("Successfully logged in")
 	return e, err
 }
 
 func (e *CFExecutor) CF(args ...string) (*Output, error) {
+	fmt.Printf("Calling %s\n", strings.Join(args, " "))
 	return e.Exec("cf", args...)
 }
 

@@ -31,6 +31,7 @@ function configure_and_start {
     appname=$1
 
     cf set-env ${appname} EMIT_INTERVAL $emit_interval
+    cf set-health-check ${appname} process
     cf start ${appname}
 }
 
@@ -55,13 +56,13 @@ drain_dest_ip=$2
 emit_interval=$3
 droplet_guid=$4
 
-create_app $name $droplet_guid
-
-emit_interval=2ms
-
 if [ -n "$EMIT_INTERVAL" ]; then
 	emit_interval=$EMIT_INTERVAL
 fi
+
+create_app $name $droplet_guid
+
+echo "Clean up old drains"
 
 for drain in $(cf drains | grep $name | awk '{print $2}'); do
     cf delete-drain --force $drain
