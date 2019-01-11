@@ -20,6 +20,7 @@ var (
 	keyFile  = flag.String("key", "", "key to use to connect for gRPC")
 	caFile   = flag.String("ca", "", "ca cert to use to connect for gRPC")
 	srcID    = flag.String("source-id", "", "envelope source ID")
+	value    = flag.Float64("value", 0.0, "a value")
 )
 
 func main() {
@@ -39,10 +40,13 @@ func main() {
 	// create env
 	env := &loggregator_v2.Envelope{
 		SourceId: *srcID,
-		Message: &loggregator_v2.Envelope_Counter{
-			Counter: &loggregator_v2.Counter{
-				Name:  "some-counter",
-				Delta: 5,
+		Message: &loggregator_v2.Envelope_Gauge{
+			Gauge: &loggregator_v2.Gauge{
+				Metrics: map[string]*loggregator_v2.GaugeValue{
+					"test-metric": &loggregator_v2.GaugeValue{
+						Value: *value,
+					},
+				},
 			},
 		},
 	}
@@ -57,6 +61,6 @@ func main() {
 			log.Fatal(err)
 		}
 		time.Sleep(time.Second)
-		log.Printf("emmiting a counter")
+		log.Printf("emmiting a gauge")
 	}
 }
