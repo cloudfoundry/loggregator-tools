@@ -25,8 +25,8 @@ function validate_variables {
         local value=${!var:-}
         case "$var" in
             DRAIN_VERSION)
-                if [ "$value" != "1.0" ] && [ "$value" != "2.0" ]; then
-                    error "$var must be either \"1.0\" or \"2.0\""
+                if [ "$value" != "1.0" ] && [ "$value" != "2.0" ] && [ "$value" != "3.0" ]; then
+                    error "$var must be either \"1.0\" or \"2.0\" or \"3.0\""
                     return 1
                 fi
                 ;;
