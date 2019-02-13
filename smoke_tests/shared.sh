@@ -152,11 +152,17 @@ function syslog_drain_service_name {
 }
 
 function syslog_drain_service_url {
-    if $(is_standalone); then
-        echo "$DRAIN_TYPE://$EXTERNAL_DRAIN_HOST:$EXTERNAL_DRAIN_PORT" && return
+    local scheme=$DRAIN_TYPE
+
+    if [[ $DRAIN_VERSION == "3.0" ]]; then
+        scheme="$scheme"-v3
     fi
 
-    echo "$DRAIN_TYPE://$(app_url $(drain_app_name))/drain"
+    if $(is_standalone); then
+        echo "$scheme://$EXTERNAL_DRAIN_HOST:$EXTERNAL_DRAIN_PORT" && return
+    fi
+
+    echo "$scheme://$(app_url $(drain_app_name))/drain"
 }
 
 function test_uuid {
