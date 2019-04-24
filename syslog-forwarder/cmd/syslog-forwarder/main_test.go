@@ -127,7 +127,7 @@ var _ = Describe("Main", func() {
 				fmt.Sprintf("SYSLOG_URL=%s", fakeSyslog.URL),
 			}
 
-			path, err := gexec.Build("code.cloudfoundry.org/cf-drain-cli/cmd/syslog-forwarder")
+			path, err := gexec.Build("code.cloudfoundry.org/loggregator-tools/syslog-forwarder/cmd/syslog-forwarder")
 			Expect(err).ToNot(HaveOccurred())
 
 			var ctx context.Context
@@ -180,7 +180,7 @@ var _ = Describe("Main", func() {
 				fmt.Sprintf("SYSLOG_URL=%s", fakeSyslog.URL),
 			}
 
-			path, err := gexec.Build("code.cloudfoundry.org/cf-drain-cli/cmd/syslog-forwarder")
+			path, err := gexec.Build("code.cloudfoundry.org/loggregator-tools/syslog-forwarder/cmd/syslog-forwarder")
 			Expect(err).ToNot(HaveOccurred())
 
 			var ctx context.Context
@@ -302,7 +302,7 @@ var _ = Describe("Main", func() {
 				fmt.Sprintf("SYSLOG_URL=%s", fakeSyslog.URL),
 			}
 
-			path, err := gexec.Build("code.cloudfoundry.org/cf-drain-cli/cmd/syslog-forwarder")
+			path, err := gexec.Build("code.cloudfoundry.org/loggregator-tools/syslog-forwarder/cmd/syslog-forwarder")
 			Expect(err).ToNot(HaveOccurred())
 
 			var ctx context.Context

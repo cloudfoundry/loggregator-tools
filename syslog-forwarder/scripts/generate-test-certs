@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -ex
+
+readlink() {
+  (
+    cd $(dirname $1)
+    echo $PWD/$(basename $1)
+  )
+}
+
+# Place keys and certificates here
+depot_path=$(readlink ./test-certs)
+mkdir -p ${depot_path}
+
+# Install certstrap
+go get -v github.com/square/certstrap
+
+# CA to distribute to loggregator certs
+certstrap --depot-path ${depot_path} init --passphrase '' --common-name loggregatorCA --expires "25 years"
+mv -f ${depot_path}/loggregatorCA.crt ${depot_path}/loggregator-ca.crt
+mv -f ${depot_path}/loggregatorCA.key ${depot_path}/loggregator-ca.key
+mv -f ${depot_path}/loggregatorCA.crl ${depot_path}/loggregator-ca.crl
+
+# Agent certificate
+certstrap --depot-path ${depot_path} request-cert --passphrase '' --common-name test-server-name
+certstrap --depot-path ${depot_path} sign test-server-name --CA loggregator-ca --expires "25 years"
+mv -f ${depot_path}/test-server-name.crt ${depot_path}/localhost.crt
+mv -f ${depot_path}/test-server-name.key ${depot_path}/localhost.key
+
+# Syslog certificate
+certstrap --depot-path ${depot_path} request-cert --passphrase '' --common-name syslog
+certstrap --depot-path ${depot_path} sign syslog --CA loggregator-ca --expires "25 years"
+
+# Non-signing CA
+certstrap --depot-path ${depot_path} init --passphrase '' --common-name nonSigningCA --expires "25 years"
+mv -f ${depot_path}/nonSigningCA.crt ${depot_path}/non-signing-ca.crt
+mv -f ${depot_path}/nonSigningCA.key ${depot_path}/non-signing-ca.key
+mv -f ${depot_path}/nonSigningCA.crl ${depot_path}/non-signing-ca.crl
