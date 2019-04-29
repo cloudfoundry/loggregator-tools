@@ -95,6 +95,7 @@ function push_drain_app {
             COUNTER_URL \
             "http://$(app_url "$(counter_app_name)")"
 
+        cf delete-orphaned-routes -f
         if [ "$DRAIN_TYPE" = "syslog" ]; then
             cf map-route "$(drain_app_name)" "$CF_APP_DOMAIN" --random-port
         else
