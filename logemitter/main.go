@@ -11,7 +11,7 @@ func main() {
 
 	d, err := time.ParseDuration(emitInterval)
 	if err != nil {
-		d = 3 * time.Millisecond
+		d = 6 * time.Millisecond
 	}
 
 	ticker := time.NewTicker(d)
