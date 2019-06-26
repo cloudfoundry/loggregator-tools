@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
@@ -52,6 +53,7 @@ func main() {
 	logsPerSecondPerEmitter := os.Getenv("LOGS_PER_SECOND_PER_EMITTER")
 	ipsString := os.Getenv("IPS")
 	numEmitters := os.Getenv("NUM_EMITTERS")
+	syslogPort := os.Getenv("SYSLOG_PORT")
 
 	logsPerSecond, err := strconv.Atoi(logsPerSecondPerEmitter)
 	if err != nil {
@@ -67,7 +69,7 @@ func main() {
 	log.Print("Starting writers")
 	for i := 0; i < ne; i++ {
 		ip := ips[i%len(ips)]
-		go writeLogs(logsPerSecond, ip)
+		go writeLogs(logsPerSecond, ip, syslogPort)
 		log.Printf("Started writer for ip: %s", ip)
 	}
 
@@ -93,12 +95,13 @@ func main() {
 	log.Println("EXITING")
 }
 
-func writeLogs(logsPerSecond int, ip string) {
+func writeLogs(logsPerSecond int, ip, syslogPort string) {
 	t := time.NewTicker(time.Second)
 	guid := uuid.New()
-	conn := connect(ip)
+	conn := connect(ip, syslogPort)
 	defer conn.Close()
 
+	fmt.Println("emitting for guid: " + guid.String())
 	for range t.C {
 		conn = emitBatch(logsPerSecond, guid, ip, conn)
 	}
@@ -147,11 +150,12 @@ func writeWithRetry(conn net.Conn, ip, msg string) (net.Conn, error) {
 	return conn, err
 }
 
-func connect(ip string) net.Conn {
+func connect(ip, syslogPort string) net.Conn {
 	for {
-		conn, err := net.Dial("tcp", ip+":8888")
+		config := &tls.Config{InsecureSkipVerify: true}
+		conn, err := tls.Dial("tcp", ip+":"+syslogPort, config)
 		if err != nil {
-			log.Printf("failed connect to endpoint %s", ip)
+			log.Printf("failed connect to endpoint %s: %s", ip, err)
 			time.Sleep(100 * time.Millisecond)
 		} else {
 			return conn
