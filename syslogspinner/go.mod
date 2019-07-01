@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/biglogger
+module github.com/cloudfoundry-incubator/loggregator-tools/syslogspinner
 
 go 1.12
 

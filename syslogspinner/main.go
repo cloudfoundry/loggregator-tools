@@ -23,27 +23,27 @@ import (
 const RFC5424TimeOffsetNum = "2006-01-02T15:04:05.999999-07:00"
 
 var egress = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "biglogger_egress",
+	Name: "syslogspinner_egress",
 	Help: "The total number of egressed logs",
 })
 
 var dropped = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "biglogger_dropped",
+	Name: "syslogspinner_dropped",
 	Help: "The total number of dropped logs",
 })
 
 var reset = promauto.NewCounter(prometheus.CounterOpts{
-	Name: "biglogger_connections_reset",
+	Name: "syslogspinner_connections_reset",
 	Help: "The total number of reset connections",
 })
 
 var egressRateMinute = promauto.NewGauge(prometheus.GaugeOpts{
-	Name: "biglogger_egress_rate_minute",
+	Name: "syslogspinner_egress_rate_minute",
 	Help: "egress rate",
 })
 
 var egressDuration = promauto.NewHistogram(prometheus.HistogramOpts{
-	Name: "biglogger_egress_duration",
+	Name: "syslogspinner_egress_duration",
 	Help: "egress rate",
 })
 
@@ -96,24 +96,23 @@ func main() {
 }
 
 func writeLogs(logsPerSecond int, ip, syslogPort string) {
-	t := time.NewTicker(time.Second)
 	guid := uuid.New()
 	conn := connect(ip, syslogPort)
 	defer conn.Close()
 
 	fmt.Println("emitting for guid: " + guid.String())
-	for range t.C {
-		conn = emitBatch(logsPerSecond, guid, ip, conn)
+	for {
+		conn = emitBatch(logsPerSecond, guid, ip, syslogPort, conn)
 	}
 }
 
-func emitBatch(batchSize int, guid uuid.UUID, ip string, conn net.Conn) net.Conn {
+func emitBatch(batchSize int, guid uuid.UUID, ip, syslogPort string, conn net.Conn) net.Conn {
 	for i := 0; i < batchSize; i++ {
 		msg := fmt.Sprintf("<14>1 %s test-hostname %s [MY-TASK/2] - - just a test\n", time.Now().Format(RFC5424TimeOffsetNum), guid)
 
 		var err error
 		start := time.Now()
-		conn, err = writeWithRetry(conn, ip, fmt.Sprintf("%d %s", len([]byte(msg)), msg))
+		conn, err = writeWithRetry(conn, ip, syslogPort, fmt.Sprintf("%d %s", len([]byte(msg)), msg))
 		end := time.Now()
 
 		if err != nil {
@@ -129,13 +128,11 @@ func emitBatch(batchSize int, guid uuid.UUID, ip string, conn net.Conn) net.Conn
 	return conn
 }
 
-func writeWithRetry(conn net.Conn, ip, msg string) (net.Conn, error) {
-	log.Println(msg)
-
+func writeWithRetry(conn net.Conn, ip, syslogPort, msg string) (net.Conn, error) {
 	_, err := conn.Write([]byte(msg))
 	if err != nil {
 		conn.Close()
-		conn = connect(ip)
+		conn = connect(ip, syslogPort)
 
 		if opErr, ok := err.(*net.OpError); ok {
 			if syscallErr, ok := opErr.Err.(*os.SyscallError); ok {
