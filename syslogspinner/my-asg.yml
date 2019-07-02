@@ -2,7 +2,7 @@
   {
     "protocol": "tcp",
     "destination": "10.0.1.0/24",
-    "ports": "8888",
+    "ports": "6067",
     "log": true,
     "description": "Allow http and https traffic from ZoneA"
   }

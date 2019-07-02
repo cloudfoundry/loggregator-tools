@@ -4,10 +4,12 @@ applications:
   instances: 1
   memory: 1G
   disk_quota: 20M
-  buildpack: binary_buildpack
+  buildpacks:
+  - binary_buildpack
   command: ./syslogspinner
   env:
-    LOGS_PER_SECOND_PER_EMITTER: 60
+    LOGS_PER_SECOND_PER_EMITTER: 3
     NUM_EMITTERS: 1
-    IPS: "10.0.1.14,10.0.1.15"
+    IPS: "10.0.1.14"
     SYSLOG_PORT: 6067
+    ENABLE_TLS: true

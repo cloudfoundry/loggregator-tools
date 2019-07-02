@@ -54,10 +54,17 @@ func main() {
 	ipsString := os.Getenv("IPS")
 	numEmitters := os.Getenv("NUM_EMITTERS")
 	syslogPort := os.Getenv("SYSLOG_PORT")
+	enableTLSEnv := os.Getenv("ENABLE_TLS")
+	logMsg := os.Getenv("LOG_MSG")
 
 	logsPerSecond, err := strconv.Atoi(logsPerSecondPerEmitter)
 	if err != nil {
 		log.Panic("failed to convert logs per second")
+	}
+
+	enableTLS, err := strconv.ParseBool(enableTLSEnv)
+	if err != nil {
+		log.Panic("failed to convert enable TLS")
 	}
 
 	ips := strings.Split(ipsString, ",")
@@ -66,10 +73,14 @@ func main() {
 		log.Panic("failed to convert num emitters")
 	}
 
+	if logMsg == "" {
+		logMsg = "- just a test"
+	}
+
 	log.Print("Starting writers")
 	for i := 0; i < ne; i++ {
 		ip := ips[i%len(ips)]
-		go writeLogs(logsPerSecond, ip, syslogPort)
+		go writeLogs(logsPerSecond, ip, syslogPort, logMsg, enableTLS)
 		log.Printf("Started writer for ip: %s", ip)
 	}
 
@@ -95,24 +106,24 @@ func main() {
 	log.Println("EXITING")
 }
 
-func writeLogs(logsPerSecond int, ip, syslogPort string) {
+func writeLogs(logsPerSecond int, ip, syslogPort, logMsg string, enableTLS bool) {
 	guid := uuid.New()
-	conn := connect(ip, syslogPort)
+	conn := connect(ip, syslogPort, enableTLS)
 	defer conn.Close()
 
 	fmt.Println("emitting for guid: " + guid.String())
 	for {
-		conn = emitBatch(logsPerSecond, guid, ip, syslogPort, conn)
+		conn = emitBatch(logsPerSecond, guid, ip, syslogPort, logMsg, conn, enableTLS)
 	}
 }
 
-func emitBatch(batchSize int, guid uuid.UUID, ip, syslogPort string, conn net.Conn) net.Conn {
+func emitBatch(batchSize int, guid uuid.UUID, ip, syslogPort, logMsg string, conn net.Conn, enableTLS bool) net.Conn {
 	for i := 0; i < batchSize; i++ {
-		msg := fmt.Sprintf("<14>1 %s test-hostname %s [MY-TASK/2] - - just a test\n", time.Now().Format(RFC5424TimeOffsetNum), guid)
+		msg := fmt.Sprintf("<14>1 %s test-hostname %s [MY-TASK/2] - %s \n", time.Now().Format(RFC5424TimeOffsetNum), guid, logMsg)
 
 		var err error
 		start := time.Now()
-		conn, err = writeWithRetry(conn, ip, syslogPort, fmt.Sprintf("%d %s", len([]byte(msg)), msg))
+		conn, err = writeWithRetry(conn, ip, syslogPort, fmt.Sprintf("%d %s", len([]byte(msg)), msg), enableTLS)
 		end := time.Now()
 
 		if err != nil {
@@ -128,11 +139,11 @@ func emitBatch(batchSize int, guid uuid.UUID, ip, syslogPort string, conn net.Co
 	return conn
 }
 
-func writeWithRetry(conn net.Conn, ip, syslogPort, msg string) (net.Conn, error) {
+func writeWithRetry(conn net.Conn, ip, syslogPort, msg string, enableTLS bool) (net.Conn, error) {
 	_, err := conn.Write([]byte(msg))
 	if err != nil {
 		conn.Close()
-		conn = connect(ip, syslogPort)
+		conn = connect(ip, syslogPort, enableTLS)
 
 		if opErr, ok := err.(*net.OpError); ok {
 			if syscallErr, ok := opErr.Err.(*os.SyscallError); ok {
@@ -147,10 +158,18 @@ func writeWithRetry(conn net.Conn, ip, syslogPort, msg string) (net.Conn, error)
 	return conn, err
 }
 
-func connect(ip, syslogPort string) net.Conn {
+func connect(ip, syslogPort string, enableTLS bool) net.Conn {
 	for {
-		config := &tls.Config{InsecureSkipVerify: true}
-		conn, err := tls.Dial("tcp", ip+":"+syslogPort, config)
+		var conn net.Conn
+		var err error
+
+		if enableTLS {
+			config := &tls.Config{InsecureSkipVerify: true}
+			conn, err = tls.Dial("tcp", ip+":"+syslogPort, config)
+		} else {
+			conn, err = net.Dial("tcp", ip+":"+syslogPort)
+		}
+
 		if err != nil {
 			log.Printf("failed connect to endpoint %s: %s", ip, err)
 			time.Sleep(100 * time.Millisecond)
