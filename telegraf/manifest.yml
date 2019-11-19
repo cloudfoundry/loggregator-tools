@@ -1,0 +1,10 @@
+---
+applications:
+- name: telegraf
+  memory: 1G
+  buildpacks:
+  - binary_buildpack
+  command: ./telegraf --config /home/vcap/app/telegraf.conf
+  health-check-type: process
+  no-route: true
+
