@@ -1,10 +1,14 @@
 ---
 applications:
 - name: telegraf
-  memory: 1G
+  sidecars:
+  - name: test
+    process_types: [ 'web' ]
+    command: ./telegraf --config /home/vcap/app/telegraf.conf --config-directory /home/vcap/app
+    memory: 256M
   buildpacks:
   - binary_buildpack
-  command: ./telegraf --config /home/vcap/app/telegraf.conf
+  command: ./confgen
   health-check-type: process
   no-route: true
 

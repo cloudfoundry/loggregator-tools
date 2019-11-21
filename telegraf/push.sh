@@ -1,5 +1,5 @@
 #!/bin/bash
-set -eo pipefail
+set -exo pipefail
 
 telegraf_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 
@@ -10,7 +10,7 @@ function create_security_group() {
 }
 
 function download_telegraf() {
-  telegraf_version=$(curl -s https://api.github.com/repos/influxdata/telegraf/releases/latest | jq -r .tag_name)
+  telegraf_version=$(curl -s https://api.github.com/repos/influxdata/telegraf/releases/latest | jq -r .tag_name || "1.12.6")
   telegraf_binary_url="https://dl.influxdata.com/telegraf/releases/telegraf-${telegraf_version}-static_linux_amd64.tar.gz"
   wget -qO- "$telegraf_binary_url" | tar xvz - --strip=2 telegraf/telegraf
 }
@@ -29,7 +29,11 @@ function create_certificates() {
 
 function push_telegraf() {
   cf target -o system -s system
-  cf push telegraf -f "${telegraf_dir}/manifest.yml"
+
+  GOOS=linux go build -o confgen
+  cf v3-create-app telegraf
+  cf v3-apply-manifest -f "${telegraf_dir}/manifest.yml"
+  cf v3-push telegraf
 }
 
 pushd ${telegraf_dir} > /dev/null

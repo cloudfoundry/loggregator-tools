@@ -1,2 +1,4 @@
 telegraf
 certs/
+confgen
+/vendor/

@@ -5,5 +5,12 @@
     "ports": "14726",
     "log": true,
     "description": "Allow scraping from Telegraf"
+  },
+  {
+    "protocol": "tcp",
+    "destination": "10.0.1.0/24",
+    "ports": "12345",
+    "log": true,
+    "description": "Get scrape urls from telegraf-config-generator"
   }
 ]

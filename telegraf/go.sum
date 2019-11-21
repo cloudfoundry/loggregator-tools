@@ -1,0 +1,4 @@
+github.com/influxdata/toml v0.0.0-20180607005434-2a2e3012f7cf h1:SDlFXYATjEbWThjvSTGdLmHyPozB8QsUFQs/LQ/bOcE=
+github.com/influxdata/toml v0.0.0-20180607005434-2a2e3012f7cf/go.mod h1:zApaNFpP/bTpQItGZNNUMISDMDAnTXu9UqJ4yT3ocz8=
+github.com/naoina/go-stringutil v0.1.0 h1:rCUeRUHjBjGTSHl0VC00jUPLz8/F9dDzYI70Hzifhks=
+github.com/naoina/go-stringutil v0.1.0/go.mod h1:XJ2SJL9jCtBh+P9q5btrd/Ylo8XwT/h1USek5+NqSA0=
