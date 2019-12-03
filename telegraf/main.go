@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"log"
+	"net"
 	"os"
 	"sort"
 	"strconv"
@@ -21,6 +22,8 @@ const (
 	appDir                = "/home/vcap/app"
 	telegrafConfigDir     = appDir + "/telegraf.d"
 )
+
+var cfInstanceIP = os.Getenv("CF_INSTANCE_IP")
 
 type TelegrafConfig struct {
 	Inputs map[string]*PromInputConfig `toml:"inputs"`
@@ -108,6 +111,11 @@ func (cg *configGenerator) writeConfigToFile() {
 	var urls []string
 	for _, scrapeTarget := range cg.timestampedTargets {
 		for _, target := range scrapeTarget.scrapeTarget.Targets {
+			host, _, _ := net.SplitHostPort(target)
+			if host == cfInstanceIP {
+				continue
+			}
+
 			id, ok := scrapeTarget.scrapeTarget.Labels["__param_id"]
 			if ok {
 				urls = append(urls, fmt.Sprintf("https://%s?id=%s", target, id))
