@@ -65,11 +65,45 @@ func main() {
 		logger.Fatalf("unable to make dir(%s): %s", telegrafConfigDir, err)
 	}
 
-	natsPassword := os.Getenv("NATS_PASSWORD")
-	natsServer := fmt.Sprintf("nats://nats:%s@10.0.1.0:4222", natsPassword)
+	cg := configGenerator{
+		timestampedTargets: map[string]timestampedTarget{},
+		logger:             logger,
+		configTTL:          45 * time.Second,
+	}
 
+	natsConn := buildNatsConn(logger)
+	_, err = natsConn.Subscribe(ScrapeTargetQueueName, cg.generate)
+	if err != nil {
+		logger.Fatalf("failed to subscribe to %s: %s", ScrapeTargetQueueName, err)
+	}
+
+	cg.start()
+}
+
+func (cg *configGenerator) start() {
+	expirationTicker := time.NewTicker(15 * time.Second)
+	writeTicker := time.NewTicker(15 * time.Second)
+
+	for {
+		select {
+		case <-writeTicker.C:
+			cg.writeConfigToFile()
+		case <-expirationTicker.C:
+			cg.expireScrapeConfigs()
+		}
+	}
+}
+
+func buildNatsConn(logger *log.Logger) *nats.Conn {
+	natsPassword := os.Getenv("NATS_PASSWORD")
+	natsHosts := strings.Split(os.Getenv("NATS_HOSTS"), "\n")
+
+	var natsServers []string
+	for _, natsHost := range natsHosts {
+		natsServers = append(natsServers, fmt.Sprintf("nats://nats:%s@%s:4222", natsPassword, natsHost))
+	}
 	opts := nats.Options{
-		Servers:           []string{natsServer},
+		Servers:           natsServers,
 		PingInterval:      20 * time.Second,
 		AllowReconnect:    true,
 		MaxReconnect:      -1,
@@ -84,49 +118,11 @@ func main() {
 		logger.Fatalf("Unable to connect to nats servers: %s", err)
 	}
 
-	cg := configGenerator{
-		timestampedTargets: map[string]timestampedTarget{},
-		logger:             logger,
-		configTTL:          45 * time.Second,
-	}
-
-	_, err = natsConn.Subscribe(ScrapeTargetQueueName, cg.generate)
-	if err != nil {
-		logger.Fatalf("failed to subscribe to %s: %s", ScrapeTargetQueueName, err)
-	}
-
-	expirationTicker := time.NewTicker(15 * time.Second)
-	writeTicker := time.NewTicker(15 * time.Second)
-	for {
-		select {
-		case <-writeTicker.C:
-			cg.writeConfigToFile()
-		case <-expirationTicker.C:
-			cg.expireScrapeConfigs()
-		}
-	}
+	return natsConn
 }
 
 func (cg *configGenerator) writeConfigToFile() {
-	var urls []string
-	for _, scrapeTarget := range cg.timestampedTargets {
-		for _, target := range scrapeTarget.scrapeTarget.Targets {
-			host, _, _ := net.SplitHostPort(target)
-			if host == cfInstanceIP {
-				continue
-			}
-
-			id, ok := scrapeTarget.scrapeTarget.Labels["__param_id"]
-			if ok {
-				urls = append(urls, fmt.Sprintf("https://%s?id=%s", target, id))
-				continue
-			}
-
-			urls = append(urls, fmt.Sprintf("https://%s", target))
-		}
-	}
-
-	sort.Strings(urls)
+	urls := cg.buildScrapeUrls()
 
 	cfg := PromInputConfig{
 		URLs:               urls,
@@ -139,17 +135,13 @@ func (cg *configGenerator) writeConfigToFile() {
 	newCfgBytes, err := toml.Marshal(&TelegrafConfig{
 		Inputs: map[string]*PromInputConfig{"prometheus": &cfg},
 	})
+
 	if err != nil {
-		fmt.Println(err)
+		cg.logger.Println(err)
 		return
 	}
 
-	oldCfgBytes, err := ioutil.ReadFile(telegrafConfigDir + "/inputs.conf")
-	if err != nil {
-		oldCfgBytes = []byte{}
-	}
-
-	if string(newCfgBytes) == string(oldCfgBytes) {
+	if ! cg.configModified(newCfgBytes) {
 		return
 	}
 
@@ -168,6 +160,37 @@ func (cg *configGenerator) writeConfigToFile() {
 	if err != nil {
 		cg.logger.Println(err)
 	}
+}
+
+func (cg *configGenerator) configModified(newCfgBytes []byte) bool {
+	oldCfgBytes, err := ioutil.ReadFile(telegrafConfigDir + "/inputs.conf")
+	if err != nil {
+		oldCfgBytes = []byte{}
+	}
+
+	return string(newCfgBytes) != string(oldCfgBytes)
+}
+
+func (cg *configGenerator) buildScrapeUrls() []string {
+	var urls []string
+	for _, scrapeTarget := range cg.timestampedTargets {
+		for _, target := range scrapeTarget.scrapeTarget.Targets {
+			host, _, _ := net.SplitHostPort(target)
+			if host == cfInstanceIP {
+				continue
+			}
+
+			id, ok := scrapeTarget.scrapeTarget.Labels["__param_id"]
+			if ok {
+				urls = append(urls, fmt.Sprintf("https://%s?id=%s", target, id))
+				continue
+			}
+
+			urls = append(urls, fmt.Sprintf("https://%s", target))
+		}
+	}
+	sort.Strings(urls)
+	return urls
 }
 
 func (cg *configGenerator) getTelegrafPID() (int, bool) {

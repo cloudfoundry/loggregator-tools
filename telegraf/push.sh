@@ -38,6 +38,7 @@ function push_telegraf() {
 
   GOOS=linux go build -o confgen
   cf v3-create-app telegraf
+  cf set-env telegraf NATS_HOSTS "$(bosh instances --column Instance --column IPs | grep nats | awk '{print $2}')"
   cf set-env telegraf NATS_PASSWORD "$(credhub get -n $(credhub find -n nats_password --output-json | jq -r .credentials[0].name) -q)"
   cf v3-apply-manifest -f "${telegraf_dir}/manifest.yml"
   cf v3-push telegraf
