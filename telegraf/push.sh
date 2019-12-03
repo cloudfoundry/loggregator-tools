@@ -5,7 +5,13 @@ telegraf_dir=$(cd $(dirname ${BASH_SOURCE}) && pwd)
 
 function create_security_group() {
   echo "Creating Telegraf scrape security group"
-  cf create-security-group telegraf-scrape "${telegraf_dir}/asg.json"
+
+  if ! cf security-group telegraf-scrape > /dev/null ; then
+    cf create-security-group telegraf-scrape "${telegraf_dir}/asg.json"
+  else
+    cf update-security-group telegraf-scrape "${telegraf_dir}/asg.json"
+  fi
+
   cf bind-security-group telegraf-scrape system system
 }
 
@@ -32,6 +38,7 @@ function push_telegraf() {
 
   GOOS=linux go build -o confgen
   cf v3-create-app telegraf
+  cf set-env telegraf NATS_PASSWORD "$(credhub get -n $(credhub find -n nats_password --output-json | jq -r .credentials[0].name) -q)"
   cf v3-apply-manifest -f "${telegraf_dir}/manifest.yml"
   cf v3-push telegraf
 }

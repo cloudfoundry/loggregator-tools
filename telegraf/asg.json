@@ -8,9 +8,9 @@
   },
   {
     "protocol": "tcp",
-    "destination": "10.0.1.0/24",
-    "ports": "12345",
+    "destination": "10.0.1.0",
+    "ports": "4222",
     "log": true,
-    "description": "Get scrape urls from telegraf-config-generator"
+    "description": "NATS"
   }
 ]
