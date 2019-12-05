@@ -40,7 +40,7 @@ function push_telegraf() {
   cf v3-create-app telegraf
   cf set-env telegraf NATS_HOSTS "$(bosh instances --column Instance --column IPs | grep nats | awk '{print $2}')"
 
-  nats_cred_name=$(credhub find --name nats_password --output-json | jq -r .credentials[0].name)
+  nats_cred_name=$(credhub find --name-like nats_password --output-json | jq -r .credentials[0].name)
   cf set-env telegraf NATS_PASSWORD "$(credhub get --name ${nats_cred_name} --quiet)"
 
   cf v3-apply-manifest -f "${telegraf_dir}/manifest.yml"
