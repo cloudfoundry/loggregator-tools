@@ -1,0 +1,6 @@
+---
+applications:
+- name: prometheus
+  buildpacks:
+  - binary_buildpack
+  command: ./prometheus --config.file=/home/vcap/app/prometheus.yml & echo $! > /home/vcap/app/prometheus.pid
