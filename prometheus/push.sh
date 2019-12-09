@@ -18,8 +18,8 @@ function create_security_group() {
 function download_prometheus() {
   prometheus_version=$(curl -s https://api.github.com/repos/prometheus/prometheus/releases/latest | jq -r .tag_name)
   prometheus_stripped_version=${prometheus_version#v}
-  prometheus_binary_url="https://github.com/prometheus/prometheus/releases/download/${prometheus_stripped_version}/prometheus-${prometheus_stripped_version}.linux-amd64.tar.gz"
-  wget -qO- "$prometheus_binary_url" | tar xvz - --strip=2 prometheus/prometheus
+  prometheus_binary_url="https://github.com/prometheus/prometheus/releases/download/${prometheus_version}/prometheus-${prometheus_stripped_version}.linux-amd64.tar.gz"
+  wget -qO- "$prometheus_binary_url" | tar xvz - --strip=1 prometheus-*/prometheus
 }
 
 function create_certificates() {
@@ -37,8 +37,14 @@ function create_certificates() {
 function push_prometheus() {
   cf target -o system -s system
 
-  cf v3-apply-manifest -f "${prometheus_dir}/manifest.yml"
-  cf v3-push prometheus
+  cf push -u process --no-route
+  APP_GUID=$(cf app prometheus --guid)
+  cf curl /v2/apps/$APP_GUID -X PUT -d '{"ports": [9090]}'
+  SPACE_URL=$(cf curl /v2/apps/$APP_GUID | jq -r .entity.space_url)
+  SPACE_NAME=$(cf curl $SPACE_URL | jq -r .entity.name)
+  cf create-route $SPACE_NAME papaya.loggr.cf-app.com --hostname prometheus
+  ROUTE_GUID=$(cf curl /v2/routes?q=host:prometheus | jq .resources[0].metadata.guid -r)
+  cf curl /v2/route_mappings -X POST -d '{"app_guid":"'${APP_GUID}'", "route_guid":"'${ROUTE_GUID}'", "app_port": 9090}'
 }
 
 pushd ${prometheus_dir} > /dev/null
