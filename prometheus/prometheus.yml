@@ -1,0 +1,10 @@
+scrape_configs:
+- job_name: cf_vms
+  scheme: https
+  static_configs:
+  - targets: ['10.0.1.2:14726','10.0.1.15:14726','10.0.1.16:14726','10.0.1.17:14726']
+  tls_config:
+    ca_file: certs/scrape_ca.crt
+    cert_file: certs/scrape.crt
+    key_file: certs/scrape.key
+    insecure_skip_verify: true
