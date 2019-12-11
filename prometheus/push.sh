@@ -36,18 +36,10 @@ function create_certificates() {
 
 function push_prometheus() {
   cf target -o system -s system
-
-  cf push -u process --no-route
-  APP_GUID=$(cf app prometheus --guid)
-  cf curl /v2/apps/$APP_GUID -X PUT -d '{"ports": [9090]}'
-  SPACE_URL=$(cf curl /v2/apps/$APP_GUID | jq -r .entity.space_url)
-  SPACE_NAME=$(cf curl $SPACE_URL | jq -r .entity.name)
-  cf create-route $SPACE_NAME papaya.loggr.cf-app.com --hostname prometheus
-  ROUTE_GUID=$(cf curl /v2/routes?q=host:prometheus | jq .resources[0].metadata.guid -r)
-  cf curl /v2/route_mappings -X POST -d '{"app_guid":"'${APP_GUID}'", "route_guid":"'${ROUTE_GUID}'", "app_port": 9090}'
+  cf push
 }
 
-pushd ${prometheus_dir} > /dev/null
+pushd "${prometheus_dir}" > /dev/null
   download_prometheus
   create_security_group
   create_certificates
