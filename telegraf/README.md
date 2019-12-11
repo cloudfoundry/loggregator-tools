@@ -11,7 +11,7 @@ order to ingest all metrics.
 
 #### Dropping metrics
 This promQL query will allow you to determine if a specific output is not keeping up
-A good number to shoot for is 99% of metrics getting through
+A good number to shoot for is 99% of metrics getting through.
 Just replace `my-output-plugin` with the name of your output e.g. datadog
 ```
 100 * (1 -
