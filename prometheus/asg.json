@@ -1,9 +1,0 @@
-[
-  {
-    "protocol": "tcp",
-    "destination": "10.0.1.0/24",
-    "ports": "14726",
-    "log": true,
-    "description": "Allow scraping for Prometheus"
-  }
-]
