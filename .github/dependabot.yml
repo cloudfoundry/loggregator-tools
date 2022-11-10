@@ -34,3 +34,8 @@ updates:
   directory: "/latency"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/latency-log-cache"
+  schedule:
+    interval: "weekly"
