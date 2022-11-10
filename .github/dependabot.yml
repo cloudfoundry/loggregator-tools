@@ -29,3 +29,8 @@ updates:
   directory: "/jsonspinner"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/latency"
+  schedule:
+    interval: "weekly"
