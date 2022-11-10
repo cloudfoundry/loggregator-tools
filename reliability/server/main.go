@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+
 	"code.cloudfoundry.org/loggregator-tools/reliability/server/internal/api"
 )
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -76,7 +75,7 @@ var _ = Describe("CreateTestHandler", func() {
 				Reader: strings.NewReader(body),
 			},
 		})
-		_, err := ioutil.ReadAll(recorder.Body)
+		_, err := io.ReadAll(recorder.Body)
 
 		Expect(recorder.Code).To(Equal(http.StatusBadRequest))
 		Expect(err).ToNot(HaveOccurred())
@@ -132,7 +131,7 @@ var _ = Describe("CreateTestHandler", func() {
 			})
 
 			Expect(recorder.Code).To(Equal(http.StatusInternalServerError))
-			body, err := ioutil.ReadAll(recorder.Body)
+			body, err := io.ReadAll(recorder.Body)
 			Expect(err).ToNot(HaveOccurred())
 			Expect(body).To(Equal([]byte("some-error")))
 		})

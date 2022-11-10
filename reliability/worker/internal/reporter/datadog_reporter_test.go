@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"time"
-	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/ginkgo/extensions/table"
 	. "github.com/onsi/gomega"
+
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 )
 
 var _ = Describe("DataDogReporter", func() {
@@ -19,7 +19,7 @@ var _ = Describe("DataDogReporter", func() {
 		spyHTTPClient := &spyHTTPClient{}
 		spyHTTPClient.postResponseReturn = &http.Response{
 			StatusCode: 201,
-			Body:       ioutil.NopCloser(nil),
+			Body:       io.NopCloser(nil),
 		}
 		r := reporter.NewDataDogReporter(
 			"somekey",
@@ -42,7 +42,7 @@ var _ = Describe("DataDogReporter", func() {
 		))
 		Expect(spyHTTPClient.contentType).To(Equal("application/json;charset=utf-8"))
 
-		actualPayload, _ := ioutil.ReadAll(spyHTTPClient.body)
+		actualPayload, _ := io.ReadAll(spyHTTPClient.body)
 		expectedPayload := fmt.Sprintf(`
 			{
 				"series":[
@@ -72,7 +72,7 @@ var _ = Describe("DataDogReporter", func() {
 		spyHTTPClient := &spyHTTPClient{}
 		spyHTTPClient.postResponseReturn = &http.Response{
 			StatusCode: 422,
-			Body:       ioutil.NopCloser(nil),
+			Body:       io.NopCloser(nil),
 		}
 
 		r := reporter.NewDataDogReporter(
@@ -110,7 +110,7 @@ var _ = Describe("DataDogReporter", func() {
 		spyHTTPClient := &spyHTTPClient{}
 		spyHTTPClient.postResponseReturn = &http.Response{
 			StatusCode: status,
-			Body:       ioutil.NopCloser(nil),
+			Body:       io.NopCloser(nil),
 		}
 
 		r := reporter.NewDataDogReporter(

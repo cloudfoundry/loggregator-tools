@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+
 	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
 	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 

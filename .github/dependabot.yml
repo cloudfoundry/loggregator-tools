@@ -69,3 +69,8 @@ updates:
   directory: "/postprinter"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/reliability"
+  schedule:
+    interval: "weekly"
