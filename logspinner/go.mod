@@ -1,1 +1,3 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/logspinner
+module code.cloudfoundry.org/loggregator-tools/logspinner
+
+go 1.19

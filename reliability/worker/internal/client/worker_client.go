@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"log"
+
 	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 
 	"github.com/gorilla/websocket"

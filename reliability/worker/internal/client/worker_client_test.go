@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"sync/atomic"
+
 	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
 

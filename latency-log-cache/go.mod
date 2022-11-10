@@ -1,22 +1,25 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/latency
+module code.cloudfoundry.org/loggregator-tools/latency-log-cache
 
-go 1.17
+go 1.19
 
 require (
-	code.cloudfoundry.org/go-log-cache v1.0.1-0.20211123204853-93b7f0836b81
-	code.cloudfoundry.org/go-loggregator/v8 v8.0.2-0.20200722201844-b5130958b65d
+	code.cloudfoundry.org/go-log-cache v1.0.1-0.20221102173037-3fb22d6d098c
+	code.cloudfoundry.org/go-loggregator/v9 v9.0.3
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 )
 
 require (
-	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
+	github.com/go-task/slim-sprig v0.0.0-20210107165309-348f09dbbbc0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.6.0 // indirect
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
-	golang.org/x/sys v0.0.0-20210510120138-977fb7262007 // indirect
-	golang.org/x/text v0.3.5 // indirect
-	google.golang.org/genproto v0.0.0-20210903162649-d08c68adba83 // indirect
-	google.golang.org/grpc v1.40.0 // indirect
-	google.golang.org/protobuf v1.27.1 // indirect
+	github.com/google/pprof v0.0.0-20221103000818-d260c55eee4c // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.13.0 // indirect
+	github.com/onsi/ginkgo/v2 v2.5.0 // indirect
+	golang.org/x/net v0.2.0 // indirect
+	golang.org/x/sys v0.2.0 // indirect
+	golang.org/x/text v0.4.0 // indirect
+	golang.org/x/tools v0.3.0 // indirect
+	google.golang.org/genproto v0.0.0-20221109142239-94d6d90a7d66 // indirect
+	google.golang.org/grpc v1.50.1 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )

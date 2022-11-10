@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -14,15 +14,14 @@ func main() {
 
 	port := os.Getenv("PORT")
 
-	var logRequests bool
-	logRequests = os.Getenv("SKIP_REQUEST_LOGGING") == "" || os.Getenv("SKIP_REQUEST_LOGGING") != "true"
+	logRequests := os.Getenv("SKIP_REQUEST_LOGGING") == "" || os.Getenv("SKIP_REQUEST_LOGGING") != "true"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		defer r.Body.Close()
 		if logRequests {
 			log.Printf("Request: %+v", r)
 		}
-		data, err := ioutil.ReadAll(r.Body)
+		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Printf("Error reading body: %s", err)
 			return
@@ -38,5 +37,5 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	http.ListenAndServe(fmt.Sprintf(":%s", port), nil)
+	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
 }

@@ -1,1 +1,3 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/jsonspinner
+module code.cloudfoundry.org/loggregator-tools/jsonspinner
+
+go 1.19

@@ -3,7 +3,6 @@ package processor
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
@@ -148,7 +147,7 @@ func (p *Processor) rawPost(body io.Reader) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode > 299 || resp.StatusCode < 200 {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return fmt.Errorf("expected success status code, got %d", resp.StatusCode)
 		}

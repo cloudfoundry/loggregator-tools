@@ -17,8 +17,7 @@ func main() {
 	go writeLogs(*size, *frequency)
 
 	addr := fmt.Sprintf(":%d", *port)
-	http.ListenAndServe(addr, nil)
-
+	fmt.Println(http.ListenAndServe(addr, nil))
 }
 
 func writeLogs(mb int, f time.Duration) {

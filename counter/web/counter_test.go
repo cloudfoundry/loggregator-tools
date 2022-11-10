@@ -6,9 +6,10 @@ import (
 	"net/http/httptest"
 	"strings"
 
-	"code.cloudfoundry.org/loggregator-tools/counter/web"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+
+	"code.cloudfoundry.org/loggregator-tools/counter/web"
 )
 
 var _ = Describe("Counter", func() {

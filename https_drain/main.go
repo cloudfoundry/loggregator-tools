@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -30,7 +30,7 @@ func main() {
 		go handler.reportCount(interval)
 	}
 
-	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), handler)
+	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), handler))
 }
 
 type Counter struct {
@@ -78,7 +78,7 @@ func (h *Handler) reportCount(interval time.Duration) {
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
-	body, err := ioutil.ReadAll(r.Body)
+	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		log.Printf("Failed to read body: %s", err)
@@ -121,8 +121,6 @@ func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	c.primeCount += msgCounts.PrimeCount
 	c.msgCount += msgCounts.MsgCount
-
-	return
 }
 
 type messageCount struct {

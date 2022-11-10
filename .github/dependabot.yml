@@ -1,0 +1,106 @@
+version: 2
+updates:
+- package-ecosystem: "gomod"
+  directory: "/biglogger"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/constlogger"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/counter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/emitter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/https_drain"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/jsonspinner"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/latency"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/latency-log-cache"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/logemitter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/lograter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/logspinner"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/metric-server"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/postcounter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/postprinter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/reliability"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/rlpreader"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/slow_consumer"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslog_drain"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslog_to_datadog"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslogspinner"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/tcpprinter"
+  schedule:
+    interval: "weekly"

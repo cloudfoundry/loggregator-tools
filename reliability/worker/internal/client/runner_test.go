@@ -2,15 +2,15 @@ package client_test
 
 import (
 	"time"
-	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
-	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
-
-	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
 
 	"github.com/cloudfoundry/sonde-go/events"
-	"github.com/golang/protobuf/proto"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"google.golang.org/protobuf/proto"
+
+	sharedapi "code.cloudfoundry.org/loggregator-tools/reliability/api"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
+	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 )
 
 var _ = Describe("Run()", func() {

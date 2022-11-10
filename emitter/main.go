@@ -1,7 +1,6 @@
 // emitter: a tool to emit envelopes to the agent via v2 gRPC.
 //
 // see: https://hub.docker.com/r/loggregator/emitter/
-//
 package main
 
 import (
@@ -9,12 +8,12 @@ import (
 	"log"
 	"time"
 
-	"code.cloudfoundry.org/go-envstruct"
-	"code.cloudfoundry.org/go-loggregator"
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+
+	"code.cloudfoundry.org/go-envstruct"
+	loggregator "code.cloudfoundry.org/go-loggregator/v9"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 )
 
 type config struct {

@@ -5,4 +5,4 @@ applications:
   memory: 64M
   env:
     GOPACKAGENAME: code.cloudfoundry.org/loggregator-tools/jsonspinner
-    GOVERSION: go1.8
+    GOVERSION: go1.19

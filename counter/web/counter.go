@@ -12,7 +12,6 @@ import (
 
 type Counter struct {
 	mu     sync.RWMutex
-	size   int
 	counts *ring.Ring
 }
 

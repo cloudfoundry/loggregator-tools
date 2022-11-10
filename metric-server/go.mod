@@ -1,5 +1,3 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/metric-server
+module code.cloudfoundry.org/loggregator-tools/metric-server
 
-go 1.14
-
-require github.com/google/uuid v1.1.1
+go 1.19

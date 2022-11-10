@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
-	"code.cloudfoundry.org/go-loggregator/v8/rpc/loggregator_v2"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 
 	client "code.cloudfoundry.org/go-log-cache"
 	uuid "github.com/nu7hatch/gouuid"
@@ -115,7 +115,7 @@ func (h *latencyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	w.Write(resultBytes)
+	_, _ = w.Write(resultBytes)
 }
 
 func sampleSize(r *http.Request) int {
@@ -137,7 +137,7 @@ type testResults struct {
 	LogsExpected int     `json:"logs_expected"`
 }
 
-func (h *latencyHandler) executeLatencyTest(sampleQuantity int) (testResults) {
+func (h *latencyHandler) executeLatencyTest(sampleQuantity int) testResults {
 	h.mutex.Lock()
 	h.sendTimes = make(map[string]time.Time)
 	h.mutex.Unlock()
@@ -222,11 +222,7 @@ func (h *latencyHandler) visitor(results map[string]time.Duration, sampleQuantit
 			}
 		}
 
-		if h.pastDoneSendingTime(results, envelopes[len(envelopes)-1].GetTimestamp()) {
-			return false
-		}
-
-		return true
+		return !h.pastDoneSendingTime(results, envelopes[len(envelopes)-1].GetTimestamp())
 	}
 }
 
