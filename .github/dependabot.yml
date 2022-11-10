@@ -14,3 +14,8 @@ updates:
   directory: "/counter"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/emitter"
+  schedule:
+    interval: "weekly"
