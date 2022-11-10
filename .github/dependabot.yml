@@ -24,3 +24,8 @@ updates:
   directory: "/https_drain"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/jsonspinner"
+  schedule:
+    interval: "weekly"
