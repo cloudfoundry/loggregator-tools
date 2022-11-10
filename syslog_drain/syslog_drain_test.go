@@ -3,7 +3,6 @@ package main_test
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
@@ -41,7 +40,7 @@ var _ = Describe("SyslogDrain", func() {
 				func(w http.ResponseWriter, r *http.Request) {
 					reqs <- r
 
-					body, err := ioutil.ReadAll(r.Body)
+					body, err := io.ReadAll(r.Body)
 					if err != nil {
 						panic(err)
 					}

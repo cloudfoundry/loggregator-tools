@@ -84,3 +84,8 @@ updates:
   directory: "/slow_consumer"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslog_drain"
+  schedule:
+    interval: "weekly"
