@@ -1,1 +1,3 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/biglogger
+module code.cloudfoundry.org/loggregator-tools/biglogger
+
+go 1.19
