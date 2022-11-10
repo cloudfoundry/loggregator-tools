@@ -1,0 +1,11 @@
+version: 2
+updates:
+- package-ecosystem: "gomod"
+  directory: "/biglogger"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/constlogger"
+  schedule:
+    interval: "weekly"
