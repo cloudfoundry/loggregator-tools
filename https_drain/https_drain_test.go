@@ -2,7 +2,7 @@ package main_test
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
@@ -50,7 +50,7 @@ var _ = Describe("HttpsDrain", func() {
 					func(w http.ResponseWriter, r *http.Request) {
 						reqs <- r
 
-						body, err := ioutil.ReadAll(r.Body)
+						body, err := io.ReadAll(r.Body)
 						if err != nil {
 							panic(err)
 						}

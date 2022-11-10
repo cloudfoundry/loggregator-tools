@@ -19,3 +19,8 @@ updates:
   directory: "/emitter"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/https_drain"
+  schedule:
+    interval: "weekly"
