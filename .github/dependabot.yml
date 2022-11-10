@@ -49,3 +49,8 @@ updates:
   directory: "/lograter"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/logspinner"
+  schedule:
+    interval: "weekly"
