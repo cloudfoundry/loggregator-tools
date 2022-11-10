@@ -79,3 +79,8 @@ updates:
   directory: "/rlpreader"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/slow_consumer"
+  schedule:
+    interval: "weekly"
