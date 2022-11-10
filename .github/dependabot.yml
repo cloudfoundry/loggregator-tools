@@ -94,3 +94,8 @@ updates:
   directory: "/syslog_to_datadog"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslogspinner"
+  schedule:
+    interval: "weekly"
