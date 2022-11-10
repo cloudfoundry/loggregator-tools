@@ -99,3 +99,8 @@ updates:
   directory: "/syslogspinner"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/tcpprinter"
+  schedule:
+    interval: "weekly"
