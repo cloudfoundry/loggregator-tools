@@ -9,3 +9,8 @@ updates:
   directory: "/constlogger"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/counter"
+  schedule:
+    interval: "weekly"
