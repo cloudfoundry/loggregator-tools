@@ -54,3 +54,8 @@ updates:
   directory: "/logspinner"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/metric-server"
+  schedule:
+    interval: "weekly"

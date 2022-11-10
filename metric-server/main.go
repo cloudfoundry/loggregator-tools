@@ -17,12 +17,12 @@ func main() {
 	http.HandleFunc("/", helloWorldHandler)
 	http.HandleFunc("/metrics", metricHandler)
 
-	go http.ListenAndServe(":"+os.Getenv("PORT"), nil)
-	http.ListenAndServe(":8081", nil)
+	go http.ListenAndServe(":"+os.Getenv("PORT"), nil) //nolint:errcheck
+	fmt.Println(http.ListenAndServe(":8081", nil))
 }
 
 func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello World"))
+	_, _ = w.Write([]byte("Hello World"))
 }
 
 func metricHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,5 +34,5 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	w.Write([]byte(fmt.Sprintf(metrics, instances[i%4], instances[i%4], instances[i%4])))
+	_, _ = w.Write([]byte(fmt.Sprintf(metrics, instances[i%4], instances[i%4], instances[i%4])))
 }
