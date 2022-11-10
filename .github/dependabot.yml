@@ -64,3 +64,8 @@ updates:
   directory: "/postcounter"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/postprinter"
+  schedule:
+    interval: "weekly"
