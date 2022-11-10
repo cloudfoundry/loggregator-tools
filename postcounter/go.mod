@@ -1,3 +1,3 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/postcounter
+module code.cloudfoundry.org/loggregator-tools/postcounter
 
-go 1.12
+go 1.19

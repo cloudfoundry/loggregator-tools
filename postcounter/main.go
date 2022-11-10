@@ -9,8 +9,6 @@ import (
 	"time"
 )
 
-
-
 func main() {
 	log.Print("Starting Post Counter...")
 	defer log.Print("Closing Post Counter.")
@@ -26,11 +24,11 @@ func main() {
 			pt.countPost()
 		} else {
 			count := pt.getCounts(countDuration)
-			w.Write([]byte(fmt.Sprint(count)))
+			_, _ = w.Write([]byte(fmt.Sprint(count)))
 		}
 	})
 
-	http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil)
+	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%s", os.Getenv("PORT")), nil))
 }
 
 type postTracker struct {

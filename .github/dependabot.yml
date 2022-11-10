@@ -59,3 +59,8 @@ updates:
   directory: "/metric-server"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/postcounter"
+  schedule:
+    interval: "weekly"
