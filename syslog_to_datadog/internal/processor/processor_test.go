@@ -3,7 +3,6 @@ package processor_test
 import (
 	"bytes"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"sync"
 	"time"
@@ -263,7 +262,7 @@ func (s *spyClient) Post(url, contentType string, body io.Reader) (*http.Respons
 
 	return &http.Response{
 			StatusCode: 201,
-			Body:       ioutil.NopCloser(bytes.NewBuffer(nil)),
+			Body:       io.NopCloser(bytes.NewBuffer(nil)),
 		},
 		nil
 }

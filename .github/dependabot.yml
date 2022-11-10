@@ -89,3 +89,8 @@ updates:
   directory: "/syslog_drain"
   schedule:
     interval: "weekly"
+
+- package-ecosystem: "gomod"
+  directory: "/syslog_to_datadog"
+  schedule:
+    interval: "weekly"
