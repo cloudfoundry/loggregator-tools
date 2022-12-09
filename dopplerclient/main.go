@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
-	"code.cloudfoundry.org/loggregator/plumbing"
+	"code.cloudfoundry.org/loggregator-release/src/plumbing"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 )

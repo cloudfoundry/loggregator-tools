@@ -1,33 +1,24 @@
 module github.com/cloudfoundry-incubator/loggregator-tools/dummymetron
 
+go 1.19
+
 require (
-	code.cloudfoundry.org/go-batching v0.0.0-20171020220229-924d2a9b48ac // indirect
-	code.cloudfoundry.org/go-diodes v0.0.0-20180905200951-72629b5276e3 // indirect
-	code.cloudfoundry.org/go-envstruct v1.3.0 // indirect
-	code.cloudfoundry.org/go-loggregator v7.1.0+incompatible
-	code.cloudfoundry.org/go-pubsub v0.0.0-20180503211407-becd51dc37cb // indirect
-	code.cloudfoundry.org/grpc-throughputlb v0.0.0-20180905204614-e98a1ee09867 // indirect
-	code.cloudfoundry.org/log-cache v2.0.1+incompatible // indirect
-	code.cloudfoundry.org/loggregator v0.0.0-20181101142522-979c008560ec
-	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a // indirect
-	github.com/apoydence/onpar v0.0.0-20181020211944-9213f6134112 // indirect
-	github.com/beorn7/perks v0.0.0-20180321164747-3a771d992973 // indirect
-	github.com/blang/semver v3.5.1+incompatible // indirect
-	github.com/cloudfoundry/sonde-go v0.0.0-20171206171820-b33733203bb4 // indirect
-	github.com/gogo/protobuf v1.1.1 // indirect
-	github.com/gorilla/context v1.1.1 // indirect
-	github.com/gorilla/handlers v1.4.0 // indirect
-	github.com/gorilla/mux v1.6.2 // indirect
-	github.com/gorilla/websocket v1.4.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway v1.5.1 // indirect
-	github.com/mailru/easyjson v0.0.0-20180823135443-60711f1a8329 // indirect
-	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
-	github.com/onsi/gomega v1.4.2 // indirect
-	github.com/poy/onpar v0.0.0-20181020211944-9213f6134112 // indirect
-	github.com/prometheus/client_golang v0.9.1 // indirect
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910 // indirect
-	github.com/prometheus/common v0.0.0-20181020173914-7e9e6cabbd39 // indirect
-	github.com/prometheus/procfs v0.0.0-20181005140218-185b4288413d // indirect
-	golang.org/x/net v0.0.0-20181102091132-c10e9556a7bc
-	google.golang.org/grpc v1.16.0
+	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible
+	code.cloudfoundry.org/loggregator-release/src v0.0.0-20221209221420-7630348fe6a6
+	golang.org/x/net v0.4.0
+	google.golang.org/grpc v1.51.0
+)
+
+require (
+	code.cloudfoundry.org/go-loggregator/v9 v9.0.3 // indirect
+	code.cloudfoundry.org/rfc5424 v0.0.0-20201103192249-000122071b78 // indirect
+	code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
+	github.com/go-logr/logr v1.2.3 // indirect
+	github.com/golang/protobuf v1.5.2 // indirect
+	golang.org/x/sys v0.3.0 // indirect
+	golang.org/x/text v0.5.0 // indirect
+	golang.org/x/tools v0.4.0 // indirect
+	google.golang.org/genproto v0.0.0-20220808204814-fd01256a5276 // indirect
+	google.golang.org/protobuf v1.28.1 // indirect
 )
