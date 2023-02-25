@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -60,7 +59,7 @@ func (w *HTTPSWriter) Write(env *loggregator_v2.Envelope) error {
 			return fmt.Errorf("Syslog Writer: Post responded with %d status code", resp.StatusCode)
 		}
 
-		io.Copy(ioutil.Discard, resp.Body)
+		io.Copy(io.Discard, resp.Body) //nolint:errcheck
 	}
 
 	return nil

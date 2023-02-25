@@ -1,8 +1,8 @@
 package testhelper
 
 import (
-	"io/ioutil"
 	"log"
+	"os"
 )
 
 //go:generate go get github.com/loggregator/go-bindata/...
@@ -13,7 +13,7 @@ import (
 func Cert(filename string) string {
 	contents := MustAsset(filename)
 
-	tmpfile, err := ioutil.TempFile("", "")
+	tmpfile, err := os.CreateTemp("", "")
 
 	if err != nil {
 		log.Fatal(err)

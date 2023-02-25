@@ -26,7 +26,8 @@ var _ = Describe("CurlClient", func() {
 	})
 
 	It("uses 'curl' command", func() {
-		c.Curl("some-url", "GET", "")
+		_, err := c.Curl("some-url", "GET", "")
+		Expect(err).ToNot(HaveOccurred())
 		Expect(conn.args).To(HaveLen(1))
 		Expect(conn.args[0][0]).To(Equal("curl"))
 		Expect(conn.args[0][1]).To(Equal("some-url"))
@@ -53,11 +54,11 @@ var _ = Describe("CurlClient", func() {
 
 	It("panics if method is not GET or body is populated", func() {
 		Expect(func() {
-			c.Curl("some-url", "POST", "")
+			_, _ = c.Curl("some-url", "POST", "")
 		}).To(Panic())
 
 		Expect(func() {
-			c.Curl("some-url", "GET", "something")
+			_, _ = c.Curl("some-url", "GET", "something")
 		}).To(Panic())
 	})
 })

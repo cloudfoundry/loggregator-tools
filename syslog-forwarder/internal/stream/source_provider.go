@@ -2,7 +2,6 @@ package stream
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -122,7 +121,7 @@ func (s *SingleOrSpaceProvider) resources(resource string) ([]Resource, error) {
 
 	if resp.StatusCode != http.StatusOK {
 		log.Printf("unexpected status code from cc api: %d", resp.StatusCode)
-		return nil, errors.New(fmt.Sprintf("unexpected status code from cc api: %d", resp.StatusCode))
+		return nil, fmt.Errorf("unexpected status code from cc api: %d", resp.StatusCode)
 	}
 
 	var sir struct {

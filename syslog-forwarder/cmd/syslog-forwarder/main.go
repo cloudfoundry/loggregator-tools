@@ -18,7 +18,7 @@ func main() {
 	defer l.Println("Closing Syslog Forwarder...")
 
 	cfg := LoadConfig()
-	envstruct.WriteReport(&cfg)
+	envstruct.WriteReport(&cfg) //nolint:errcheck
 
 	client := loggregator.NewRLPGatewayClient(cfg.Vcap.RLPAddr,
 		loggregator.WithRLPGatewayClientLogger(l),

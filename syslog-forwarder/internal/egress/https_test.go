@@ -1,7 +1,7 @@
 package egress_test
 
 import (
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -211,7 +211,8 @@ var _ = Describe("HTTPWriter", func() {
 		)
 
 		env := buildLogEnvelope("APP", "1", "just a test", loggregator_v2.Log_OUT)
-		writer.Write(env)
+		err := writer.Write(env)
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	It("ignores non-log envelopes", func() {
@@ -253,7 +254,7 @@ func newMockDrain(status int) *SpyDrain {
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		message := &rfc5424.Message{}
 
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		Expect(err).ToNot(HaveOccurred())
 		defer r.Body.Close()
 

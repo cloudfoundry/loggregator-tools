@@ -255,7 +255,7 @@ type appsResponse struct {
 	Apps       []appData `json:"resources"`
 	Pagination struct {
 		Next string `json:"next"`
-	} `json:pagination`
+	} `json:"pagination"`
 }
 
 type appData struct {

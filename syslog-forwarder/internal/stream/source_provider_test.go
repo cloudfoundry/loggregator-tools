@@ -2,7 +2,7 @@ package stream_test
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -230,7 +230,7 @@ func (c *stubHTTPClient) Get(url string) (*http.Response, error) {
 
 	resp := &http.Response{
 		StatusCode: c.statusCodes[c.requestCount],
-		Body:       ioutil.NopCloser(strings.NewReader(c.bodies[c.requestCount])),
+		Body:       io.NopCloser(strings.NewReader(c.bodies[c.requestCount])),
 	}
 
 	return resp, nil

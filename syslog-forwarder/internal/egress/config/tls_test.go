@@ -1,11 +1,11 @@
 package config_test
 
 import (
-	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/testhelper"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"os"
+
+	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/testhelper"
 
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress/config"
 	. "github.com/onsi/ginkgo"
@@ -34,8 +34,8 @@ var _ = Describe("TLS", func() {
 				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			))
 
-			Expect(string(conf.RootCAs.Subjects()[0])).To(ContainSubstring("loggregatorCA"))
-			Expect(string(conf.ClientCAs.Subjects()[0])).To(ContainSubstring("loggregatorCA"))
+			Expect(string(conf.RootCAs.Subjects()[0])).To(ContainSubstring("loggregatorCA"))   //nolint:staticcheck
+			Expect(string(conf.ClientCAs.Subjects()[0])).To(ContainSubstring("loggregatorCA")) //nolint:staticcheck
 
 			Expect(conf.ServerName).To(Equal("test-server-name"))
 		})
@@ -97,9 +97,9 @@ var _ = Describe("TLS", func() {
 })
 
 func writeFile(data string) string {
-	f, err := ioutil.TempFile("", "")
+	f, err := os.CreateTemp("", "")
 	Expect(err).ToNot(HaveOccurred())
-	_, err = fmt.Fprintf(f, data)
+	_, err = fmt.Fprint(f, data)
 	Expect(err).ToNot(HaveOccurred())
 	return f.Name()
 }

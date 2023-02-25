@@ -3,7 +3,7 @@ package main_test
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os/exec"
@@ -63,7 +63,7 @@ var _ = Describe("Main", func() {
 				c := rlpResp[sourceID]
 
 				for data := range c {
-					w.Write(data)
+					w.Write(data) //nolint:errcheck
 					flusher.Flush()
 				}
 			case "/v3/service_instances":
@@ -73,7 +73,7 @@ var _ = Describe("Main", func() {
 					w.WriteHeader(capiRespCode)
 				}
 
-				w.Write(<-serviceResps)
+				w.Write(<-serviceResps) //nolint:errcheck
 			case "/v3/apps":
 				capiReqs <- r
 
@@ -81,7 +81,7 @@ var _ = Describe("Main", func() {
 					w.WriteHeader(capiRespCode)
 				}
 
-				w.Write(<-appResps)
+				w.Write(<-appResps) //nolint:errcheck
 			default:
 				w.WriteHeader(http.StatusNotFound)
 			}
@@ -90,7 +90,7 @@ var _ = Describe("Main", func() {
 		syslogReqs = make(chan *http.Request, 100)
 		syslogBodies = make(chan []byte, 100)
 		fakeSyslog = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			body, err := ioutil.ReadAll(r.Body)
+			body, err := io.ReadAll(r.Body)
 			Expect(err).ToNot(HaveOccurred())
 			defer r.Body.Close()
 
@@ -101,7 +101,7 @@ var _ = Describe("Main", func() {
 
 	AfterEach(func() {
 		cancel()
-		cmd.Wait()
+		cmd.Wait() //nolint:errcheck
 
 		for _, c := range rlpResp {
 			close(c)
