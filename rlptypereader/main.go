@@ -1,5 +1,4 @@
 // rlpreader: a tool that reads messages from RLP.
-//
 package main
 
 import (
@@ -10,7 +9,6 @@ import (
 	"strings"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-release/src/plumbing"
@@ -29,7 +27,7 @@ var (
 func main() {
 	flag.Parse()
 
-	tlsConfig, err := plumbing.NewClientMutualTLSConfig(
+	transportCreds, err := plumbing.NewClientCredentials(
 		*certFile,
 		*keyFile,
 		*caFile,
@@ -38,7 +36,6 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	transportCreds := credentials.NewTLS(tlsConfig)
 
 	conn, err := grpc.Dial(*target, grpc.WithTransportCredentials(transportCreds))
 	if err != nil {
