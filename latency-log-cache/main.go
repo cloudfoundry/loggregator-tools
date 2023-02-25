@@ -14,10 +14,10 @@ import (
 	"sync"
 	"time"
 
-	"code.cloudfoundry.org/go-log-cache/rpc/logcache_v1"
+	"code.cloudfoundry.org/go-log-cache/v2/rpc/logcache_v1"
 	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 
-	client "code.cloudfoundry.org/go-log-cache"
+	client "code.cloudfoundry.org/go-log-cache/v2"
 	uuid "github.com/nu7hatch/gouuid"
 )
 
