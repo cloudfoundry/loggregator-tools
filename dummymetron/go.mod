@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/dummymetron
+module code.cloudfoundry.org/loggregator-tools/dummymetron
 
 go 1.19
 

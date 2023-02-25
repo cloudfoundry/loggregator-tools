@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/envelopeemitter
+module code.cloudfoundry.org/loggregator-tools/envelopeemitter
 
 go 1.19
 
