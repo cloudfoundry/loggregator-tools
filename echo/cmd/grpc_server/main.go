@@ -62,8 +62,6 @@ func (r *echoReceiver) Sender(sender loggregator_v2.Ingress_SenderServer) error 
 
 		fmt.Printf("%+v \n", e)
 	}
-
-	return nil
 }
 
 func (r *echoReceiver) BatchSender(sender loggregator_v2.Ingress_BatchSenderServer) error {
@@ -78,8 +76,6 @@ func (r *echoReceiver) BatchSender(sender loggregator_v2.Ingress_BatchSenderServ
 			fmt.Printf("%+v \n", e)
 		}
 	}
-
-	return nil
 }
 
 func (r *echoReceiver) Send(_ context.Context, b *loggregator_v2.EnvelopeBatch) (*loggregator_v2.SendResponse, error) {

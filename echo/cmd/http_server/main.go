@@ -21,7 +21,7 @@ func main() {
 func NewServer(port int, path, certPath, keyPath string) *server {
 	mux := http.NewServeMux()
 	mux.HandleFunc(path, echoHandler)
-	srv := http.Server{
+	srv := &http.Server{
 		Handler: mux,
 		Addr:    fmt.Sprintf(":%d", port),
 	}
@@ -36,7 +36,7 @@ func NewServer(port int, path, certPath, keyPath string) *server {
 type server struct {
 	certPath string
 	keyPath  string
-	srv      http.Server
+	srv      *http.Server
 }
 
 func (s *server) Start() {
