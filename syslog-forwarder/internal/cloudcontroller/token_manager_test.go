@@ -51,7 +51,8 @@ var _ = Describe("TokenManager", func() {
 			true,
 			stubLogger,
 		)
-		m.Token()
+		_, _, err := m.Token()
+		Expect(err).NotTo(HaveOccurred())
 		Expect(uaa.reqSkipCertVerify).To(BeTrue())
 
 		m = cloudcontroller.NewTokenManager(
@@ -62,23 +63,25 @@ var _ = Describe("TokenManager", func() {
 			false,
 			stubLogger,
 		)
-		m.Token()
+		_, _, err = m.Token()
+		Expect(err).NotTo(HaveOccurred())
 		Expect(uaa.reqSkipCertVerify).To(BeFalse())
 	})
 
 	It("returns an error if UAA fails", func() {
 		uaa.respError = errors.New("uaa-error")
-		Expect(func() { m.Token() }).To(Panic())
+		Expect(func() { _, _, _ = m.Token() }).To(Panic())
 	})
 
 	It("does not overwrite the refresh token if GetRefreshToken fails", func() {
 		uaa.respError = errors.New("Failed to fetch tokens from UAA")
-		Expect(func() { m.Token() }).To(Panic())
+		Expect(func() { _, _, _ = m.Token() }).To(Panic())
 		Expect(stubLogger.called).To(Equal(1))
 
 		// recovery
 		uaa.respError = nil
-		m.Token()
+		_, _, err := m.Token()
+		Expect(err).NotTo(HaveOccurred())
 
 		Expect(uaa.reqRefreshToken).To(Equal("initial-refresh-token"))
 	})

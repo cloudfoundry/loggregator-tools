@@ -3,7 +3,7 @@ package cloudcontroller
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -63,7 +63,7 @@ func (c *HTTPCurlClient) authCurl(URL, method, body, token string) ([]byte, erro
 	}
 	URL = u.String() + URL
 
-	req, _ := http.NewRequest(method, URL, ioutil.NopCloser(strings.NewReader(body)))
+	req, _ := http.NewRequest(method, URL, io.NopCloser(strings.NewReader(body)))
 
 	if token != "" {
 		req.Header.Set("Authorization", token)
@@ -78,7 +78,7 @@ func (c *HTTPCurlClient) authCurl(URL, method, body, token string) ([]byte, erro
 		return nil, err
 	}
 
-	data, err := ioutil.ReadAll(resp.Body)
+	data, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}

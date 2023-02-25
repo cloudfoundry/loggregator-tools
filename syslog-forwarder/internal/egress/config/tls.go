@@ -5,8 +5,8 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 )
 
@@ -53,7 +53,7 @@ func NewMutualTLSConfig(certFile, keyFile, caCertFile, serverName string) (*tls.
 }
 
 func addCA(tlsConfig *tls.Config, tlsCert tls.Certificate, caCertFile string) error {
-	certBytes, err := ioutil.ReadFile(caCertFile)
+	certBytes, err := os.ReadFile(caCertFile)
 	if err != nil {
 		return fmt.Errorf("failed to read ca cert file: %s", err.Error())
 	}

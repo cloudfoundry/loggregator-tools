@@ -2,7 +2,7 @@ package cloudcontroller_test
 
 import (
 	"errors"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -66,7 +66,8 @@ var _ = Describe("HttpCurlClient", func() {
 		// Now go get a new token
 		doer.statusCode = http.StatusUnauthorized
 		doer.headers = nil
-		c.Curl("some-url", "PUT", "some-body")
+		_, err = c.Curl("some-url", "PUT", "some-body")
+		Expect(err).To(HaveOccurred())
 		Expect(fetcher.called).To(Equal(2))
 
 		Expect(restager.refreshToken).To(Equal("some-other-ref-token"))
@@ -98,12 +99,14 @@ var _ = Describe("HttpCurlClient", func() {
 	})
 
 	It("attaches the header 'Content-Type' for non-GET requests", func() {
-		c.Curl("some-url", "GET", "")
+		_, err := c.Curl("some-url", "GET", "")
+		Expect(err).ToNot(HaveOccurred())
 		Expect(doer.headers).ToNot(
 			ContainElement(HaveKeyWithValue("Content-Type", []string{"application/json"})),
 		)
 
-		c.Curl("some-url", "PUT", "some-body")
+		_, err = c.Curl("some-url", "PUT", "some-body")
+		Expect(err).ToNot(HaveOccurred())
 		Expect(doer.headers).To(
 			ContainElement(HaveKeyWithValue("Content-Type", []string{"application/json"})),
 		)
@@ -111,19 +114,21 @@ var _ = Describe("HttpCurlClient", func() {
 
 	It("panics if method is GET and has a body", func() {
 		Expect(func() {
-			c.Curl("some-url", "GET", "some-body")
+			_, _ = c.Curl("some-url", "GET", "some-body")
 		}).To(Panic())
 	})
 
 	It("survives the race detector", func() {
 		go func() {
 			for i := 0; i < 100; i++ {
-				c.Curl("/v2/some-url", "PUT", "some-body")
+				_, err := c.Curl("/v2/some-url", "PUT", "some-body")
+				Expect(err).ToNot(HaveOccurred())
 			}
 		}()
 
 		for i := 0; i < 100; i++ {
-			c.Curl("/v2/some-url", "PUT", "some-body")
+			_, err := c.Curl("/v2/some-url", "PUT", "some-body")
+			Expect(err).ToNot(HaveOccurred())
 		}
 	})
 })
@@ -159,7 +164,7 @@ func (s *spyDoer) Do(r *http.Request) (*http.Response, error) {
 	var body []byte
 	if r.Body != nil {
 		var err error
-		body, err = ioutil.ReadAll(r.Body)
+		body, err = io.ReadAll(r.Body)
 		if err != nil {
 			panic(err)
 		}
@@ -169,7 +174,7 @@ func (s *spyDoer) Do(r *http.Request) (*http.Response, error) {
 
 	return &http.Response{
 		StatusCode: s.statusCode,
-		Body:       ioutil.NopCloser(strings.NewReader(s.respBody)),
+		Body:       io.NopCloser(strings.NewReader(s.respBody)),
 	}, s.err
 }
 
