@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/echo
+module code.cloudfoundry.org/loggregator-tools/echo
 
 go 1.19
 

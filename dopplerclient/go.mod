@@ -1,4 +1,4 @@
-module github.com/cloudfoundry-incubator/loggregator-tools/dopplerclient
+module code.cloudfoundry.org/loggregator-tools/dopplerclient
 
 go 1.19
 
