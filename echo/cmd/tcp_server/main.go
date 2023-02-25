@@ -5,9 +5,9 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net"
+	"os"
 	"time"
 )
 
@@ -72,12 +72,12 @@ func (s *server) listen(address string) {
 }
 
 func (s *server) listenTLS(address string, certPath, keyPath string) {
-	certContent, err := ioutil.ReadFile(certPath)
+	certContent, err := os.ReadFile(certPath)
 	if err != nil {
 		panic(err)
 	}
 
-	keyContent, err := ioutil.ReadFile(keyPath)
+	keyContent, err := os.ReadFile(keyPath)
 	if err != nil {
 		panic(err)
 	}
@@ -102,7 +102,10 @@ func (s *server) listenTLS(address string, certPath, keyPath string) {
 
 func (s *server) handleConnection(conn net.Conn) {
 	defer conn.Close()
-	conn.SetReadDeadline(time.Now().Add(readDeadline))
+	err := conn.SetReadDeadline(time.Now().Add(readDeadline))
+	if err != nil {
+		return
+	}
 
 	buffer := make([]byte, 1024)
 	for {
