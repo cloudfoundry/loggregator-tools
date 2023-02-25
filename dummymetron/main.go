@@ -1,5 +1,4 @@
 // dummymetron: a program that accepts envelopes via UDP (v1) and gRPC (v2).
-//
 package main
 
 import (
@@ -10,7 +9,6 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-release/src/plumbing"
@@ -28,44 +26,39 @@ func main() {
 	flag.Parse()
 
 	// v1
-	{
-		connection, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", *udpPort))
-		if err != nil {
-			log.Fatal(err)
-		}
-		log.Printf("Listening on %s", connection.LocalAddr().String())
-		go func() {
-			b := make([]byte, 1024)
-			for {
-				_, _, err := connection.ReadFrom(b)
-				if err != nil {
-					log.Print(err)
-				}
-			}
-		}()
+	connection, err := net.ListenPacket("udp4", fmt.Sprintf(":%d", *udpPort))
+	if err != nil {
+		log.Fatal(err)
 	}
+	log.Printf("Listening on %s", connection.LocalAddr().String())
+	go func() {
+		b := make([]byte, 1024)
+		for {
+			_, _, err := connection.ReadFrom(b)
+			if err != nil {
+				log.Print(err)
+			}
+		}
+	}()
 
 	// v2
-	{
-		tlsConfig, err := plumbing.NewServerMutualTLSConfig(
-			*certFile,
-			*keyFile,
-			*caFile,
-		)
-		if err != nil {
-			log.Fatal(err)
-		}
-		transportCreds := credentials.NewTLS(tlsConfig)
-
-		listener, err := net.Listen("tcp", fmt.Sprintf(":%d", *grpcPort))
-		if err != nil {
-			log.Fatal(err)
-		}
-		grpcServer := grpc.NewServer(grpc.Creds(transportCreds))
-		loggregator_v2.RegisterIngressServer(grpcServer, &Server{})
-		log.Printf("Starting gRPC server on %s", listener.Addr().String())
-		log.Fatal(grpcServer.Serve(listener))
+	transportCreds, err := plumbing.NewServerCredentials(
+		*certFile,
+		*keyFile,
+		*caFile,
+	)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", *grpcPort))
+	if err != nil {
+		log.Fatal(err)
+	}
+	grpcServer := grpc.NewServer(grpc.Creds(transportCreds))
+	loggregator_v2.RegisterIngressServer(grpcServer, &Server{})
+	log.Printf("Starting gRPC server on %s", listener.Addr().String())
+	log.Fatal(grpcServer.Serve(listener))
 }
 
 type Server struct{}
