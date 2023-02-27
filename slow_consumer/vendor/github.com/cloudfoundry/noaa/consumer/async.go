@@ -13,8 +13,8 @@ import (
 
 	noaa_errors "github.com/cloudfoundry/noaa/errors"
 	"github.com/cloudfoundry/sonde-go/events"
+	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -158,23 +158,15 @@ func (c *Consumer) SetOnConnectCallback(cb func()) {
 func (c *Consumer) Close() error {
 	c.connsLock.Lock()
 	defer c.connsLock.Unlock()
-
-	var errStrings []string
-
 	if len(c.conns) == 0 {
 		return errors.New("connection does not exist")
 	}
 	for len(c.conns) > 0 {
 		if err := c.conns[0].close(); err != nil {
-			errStrings = append(errStrings, err.Error())
+			return err
 		}
 		c.conns = c.conns[1:]
 	}
-
-	if len(errStrings) > 0 {
-		return fmt.Errorf(strings.Join(errStrings, ", "))
-	}
-
 	return nil
 }
 
@@ -224,7 +216,7 @@ func (c *Consumer) runStream(appGuid, authToken string, retry bool) (<-chan *eve
 }
 
 func (c *Consumer) streamAppDataTo(conn *connection, appGuid, authToken string, callback func(*events.Envelope), errors chan<- error, retry bool) {
-	streamPath := c.streamPathBuilder(appGuid)
+	streamPath := fmt.Sprintf("/apps/%s/stream", appGuid)
 	if retry {
 		c.retryAction(c.listenAction(conn, streamPath, authToken, callback), errors)
 		return
@@ -497,7 +489,7 @@ func (c *connection) close() error {
 	if c.ws == nil {
 		return nil
 	}
-	err := c.ws.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Now().Add(10*time.Second))
+	err := c.ws.WriteControl(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""), time.Time{})
 	if err != nil {
 		return err
 	}
