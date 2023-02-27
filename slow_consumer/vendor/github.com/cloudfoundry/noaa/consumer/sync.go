@@ -11,7 +11,7 @@ import (
 
 	"github.com/cloudfoundry/noaa"
 	"github.com/cloudfoundry/sonde-go/events"
-	"google.golang.org/protobuf/proto"
+	"github.com/gogo/protobuf/proto"
 )
 
 // RecentLogs connects to trafficcontroller via its 'recentlogs' http(s)
@@ -72,7 +72,12 @@ func (c *Consumer) readTC(appGuid string, authToken string, endpoint string) ([]
 		return nil, err
 	}
 
-	recentPath := c.recentPathBuilder(trafficControllerUrl, appGuid, endpoint)
+	scheme := "https"
+	if trafficControllerUrl.Scheme == "ws" {
+		scheme = "http"
+	}
+
+	recentPath := fmt.Sprintf("%s://%s/apps/%s/%s", scheme, trafficControllerUrl.Host, appGuid, endpoint)
 
 	resp, err := c.requestTC(recentPath, authToken)
 	if err != nil {
@@ -97,9 +102,7 @@ func (c *Consumer) readTC(appGuid string, authToken string, endpoint string) ([]
 		}
 
 		envelope := new(events.Envelope)
-		if err := proto.Unmarshal(buffer.Bytes(), envelope); err != nil {
-			continue
-		}
+		proto.Unmarshal(buffer.Bytes(), envelope)
 
 		envelopes = append(envelopes, envelope)
 	}
