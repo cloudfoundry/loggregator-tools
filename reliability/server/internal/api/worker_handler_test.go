@@ -40,6 +40,7 @@ var _ = Describe("WorkerServer", func() {
 		Eventually(handler.ConnCount).Should(Equal(2))
 
 		n, err := handler.Run(&sharedapi.Test{})
+		Expect(err).ToNot(HaveOccurred())
 		Expect(n).To(Equal(2))
 		Eventually(clientA.tests).Should(Receive())
 		Eventually(clientB.tests).Should(Receive())

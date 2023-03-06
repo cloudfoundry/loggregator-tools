@@ -29,12 +29,13 @@ var _ = Describe("DataDogReporter", func() {
 		)
 
 		now := time.Unix(0, 20000000000)
-		r.Report(&reporter.TestResult{
+		err := r.Report(&reporter.TestResult{
 			Delay:            1 * time.Second,
 			Cycles:           54321,
 			ReceivedLogCount: 12345,
 			TestStartTime:    now,
 		})
+		Expect(err).NotTo(HaveOccurred())
 
 		Expect(spyHTTPClient.postWasCalled).To(Equal(true))
 		Expect(spyHTTPClient.url).To(Equal(

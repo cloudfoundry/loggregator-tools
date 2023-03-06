@@ -19,6 +19,7 @@ import (
 var _ = Describe("WorkerClient", func() {
 	It("receives tests to run", func() {
 		server := newFakeWSServer()
+		defer server.stop()
 		runner := &spyRunner{}
 
 		client := client.NewWorkerClient(server.wsAddr(), true, runner)
