@@ -4,7 +4,7 @@ go 1.19
 
 require (
 	github.com/google/uuid v1.3.0
-	github.com/prometheus/client_golang v1.15.0
+	github.com/prometheus/client_golang v1.15.1
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475
 )
 
