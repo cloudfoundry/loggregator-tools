@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/go-log-cache/v2 v2.0.0
+# code.cloudfoundry.org/go-log-cache/v2 v2.0.1
 ## explicit; go 1.19
 code.cloudfoundry.org/go-log-cache/v2
 code.cloudfoundry.org/go-log-cache/v2/internal
@@ -19,7 +19,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 # github.com/google/pprof v0.0.0-20221103000818-d260c55eee4c
 ## explicit; go 1.18
-# github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.0
+# github.com/grpc-ecosystem/grpc-gateway/v2 v2.15.2
 ## explicit; go 1.17
 github.com/grpc-ecosystem/grpc-gateway/v2/internal/httprule
 github.com/grpc-ecosystem/grpc-gateway/v2/runtime
