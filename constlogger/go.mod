@@ -2,6 +2,6 @@ module code.cloudfoundry.org/loggregator-tools/constlogger
 
 go 1.19
 
-require go.uber.org/ratelimit v0.2.0
+require go.uber.org/ratelimit v0.3.0
 
-require github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129 // indirect
+require github.com/benbjohnson/clock v1.3.0 // indirect
