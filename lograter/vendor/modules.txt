@@ -1,6 +1,6 @@
-# github.com/andres-erbsen/clock v0.0.0-20160526145045-9e14626cd129
-## explicit
-github.com/andres-erbsen/clock
-# go.uber.org/ratelimit v0.2.0
-## explicit; go 1.14
+# github.com/benbjohnson/clock v1.3.0
+## explicit; go 1.15
+github.com/benbjohnson/clock
+# go.uber.org/ratelimit v0.3.0
+## explicit; go 1.18
 go.uber.org/ratelimit
