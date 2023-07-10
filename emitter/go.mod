@@ -5,7 +5,7 @@ go 1.19
 require (
 	code.cloudfoundry.org/go-envstruct v1.6.0
 	code.cloudfoundry.org/go-loggregator/v9 v9.0.6
-	google.golang.org/grpc v1.56.1
+	google.golang.org/grpc v1.56.2
 )
 
 require (
