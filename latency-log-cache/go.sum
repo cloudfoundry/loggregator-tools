@@ -1,5 +1,5 @@
-code.cloudfoundry.org/go-log-cache/v2 v2.0.2 h1:5v/+8Xa8yZtpcH7sKlsipiWu43aQzF3dqzS4oRZG274=
-code.cloudfoundry.org/go-log-cache/v2 v2.0.2/go.mod h1:Z6PNbfRBE8ZLKlJcMJm7U7amlumM/xQESaoeOTFgbU0=
+code.cloudfoundry.org/go-log-cache/v2 v2.0.3 h1:oeklZRM0lJhbegkqS3eyKvS2996I02FR8h6pCyyR72s=
+code.cloudfoundry.org/go-log-cache/v2 v2.0.3/go.mod h1:I4LDSjGRYAR2EqC/T/H3UeJ1qdA1TcPcDjtVUhIE+VY=
 code.cloudfoundry.org/go-loggregator/v9 v9.0.7 h1:vM351mliuq6Olxarar6BYFqVPYR8D5SmomD2SZA9fUY=
 code.cloudfoundry.org/go-loggregator/v9 v9.0.7/go.mod h1:THyXb1L629OSRLh73ER7SwaRV1OPmWgh0TFgmTsgJMk=
 github.com/blang/semver/v4 v4.0.0 h1:1PFHFE6yCCTv8C1TeyNNarDzntLi7wMI5i/pzqYIsAM=
