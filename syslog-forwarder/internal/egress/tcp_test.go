@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
 
 	. "github.com/onsi/ginkgo"

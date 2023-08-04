@@ -7,8 +7,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	loggregator "code.cloudfoundry.org/go-loggregator"
-	v2 "code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	loggregator "code.cloudfoundry.org/go-loggregator/v9"
+	v2 "code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
 	"golang.org/x/net/context"
 

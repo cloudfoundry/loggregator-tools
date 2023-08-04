@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
 	"code.cloudfoundry.org/rfc5424"
 	. "github.com/onsi/ginkgo"

@@ -1,7 +1,6 @@
 package envstruct
 
 import (
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -144,7 +143,7 @@ func setField(value reflect.Value, input string, hasEnvTag bool) (missing []stri
 		return nil, unmarshaller.UnmarshalEnv(input)
 	} else {
 		if value.Kind() == reflect.Struct && hasEnvTag {
-			return nil, errors.New(fmt.Sprintf("Nested struct %s with env tag needs to have an UnmarshallEnv method\n", value.Type().Name()))
+			return nil, fmt.Errorf("Nested struct %s with env tag needs to have an UnmarshallEnv method\n", value.Type().Name())
 		}
 	}
 
@@ -164,6 +163,10 @@ func setField(value reflect.Value, input string, hasEnvTag bool) (missing []stri
 		return nil, setInt(value, input)
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return nil, setUint(value, input)
+	case reflect.Float32, reflect.Float64:
+		return nil, setFloat(value, input)
+	case reflect.Complex64, reflect.Complex128:
+		return nil, setComplex(value, input)
 	case reflect.Slice:
 		return nil, setSlice(value, input, hasEnvTag)
 	case reflect.Map:
@@ -171,10 +174,10 @@ func setField(value reflect.Value, input string, hasEnvTag bool) (missing []stri
 	case reflect.Struct:
 		return setStruct(value)
 	case reflect.Ptr:
-		return setPointerToStruct(value)
+		return setPointerToStruct(value, input, hasEnvTag)
 	}
 
-	return nil, nil
+	return nil, fmt.Errorf("unsupported type %s", value.Kind())
 }
 
 func separateOnComma(input string) []string {
@@ -195,13 +198,17 @@ func setStruct(value reflect.Value) (missing []string, err error) {
 	return load(value.Addr().Interface())
 }
 
-func setPointerToStruct(value reflect.Value) (missing []string, err error) {
+func setPointerToStruct(value reflect.Value, input string, hasEnvTag bool) (missing []string, err error) {
 	if value.IsNil() {
 		p := reflect.New(value.Type().Elem())
 		value.Set(p)
 	}
 
-	return load(value.Interface())
+	if value.Type().Elem().Kind() == reflect.Struct {
+		return load(value.Interface())
+	}
+
+	return setField(value.Elem(), input, hasEnvTag)
 }
 
 func setDuration(value reflect.Value, input string) error {
@@ -260,6 +267,34 @@ func setUint(value reflect.Value, input string) error {
 	return nil
 }
 
+func setFloat(value reflect.Value, input string) error {
+	n, err := strconv.ParseFloat(input, 64)
+	if err != nil {
+		return err
+	}
+
+	value.SetFloat(float64(n))
+
+	return nil
+}
+
+func setComplex(value reflect.Value, input string) error {
+	var n complex128
+
+	count, err := fmt.Sscanf(input, "%g", &n)
+	if err != nil {
+		return err
+	}
+
+	if count != 1 {
+		return fmt.Errorf("Expected to parse 1 complex number, found %d", count)
+	}
+
+	value.SetComplex(n)
+
+	return nil
+}
+
 func setSlice(value reflect.Value, input string, hasEnvTag bool) error {
 	inputs := separateOnComma(input)
 
@@ -279,7 +314,7 @@ func setSlice(value reflect.Value, input string, hasEnvTag bool) error {
 func setMap(value reflect.Value, input string) error {
 	inputs := separateOnComma(input)
 
-	m := make(map[string]string)
+	m := reflect.MakeMap(value.Type())
 	for _, i := range inputs {
 		kv := strings.SplitN(i, ":", 2)
 
@@ -288,13 +323,25 @@ func setMap(value reflect.Value, input string) error {
 		}
 
 		if len(kv) < 2 {
-			return fmt.Errorf("map[string]string key '%s' is missing a value", kv[0])
+			return fmt.Errorf("%s key '%s' is missing a value", value.Type(), kv[0])
 		}
 
-		m[kv[0]] = kv[1]
+		castedKey := reflect.New(value.Type().Key()).Elem()
+		castedValue := reflect.New(value.Type().Elem()).Elem()
+
+		_, err := setField(castedKey, kv[0], false)
+		if err != nil {
+			return fmt.Errorf("setMap: %w", err)
+		}
+		_, err = setField(castedValue, kv[1], false)
+		if err != nil {
+			return fmt.Errorf("setMap: %w", err)
+		}
+
+		m.SetMapIndex(castedKey, castedValue)
 	}
 
-	value.Set(reflect.ValueOf(m))
+	value.Set(m)
 
 	return nil
 }

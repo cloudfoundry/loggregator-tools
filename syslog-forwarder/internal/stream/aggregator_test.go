@@ -5,8 +5,8 @@ import (
 	"log"
 	"sync"
 
-	loggregator "code.cloudfoundry.org/go-loggregator"
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	loggregator "code.cloudfoundry.org/go-loggregator/v9"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/stream"
 
 	. "github.com/onsi/ginkgo"

@@ -9,10 +9,10 @@ import (
 	"os/exec"
 	"time"
 
-	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
+	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
 	"code.cloudfoundry.org/rfc5424"
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/onsi/gomega/gexec"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -391,8 +391,7 @@ func messageBytes(hostnameSuffix, appID string) string {
 }
 
 func buildSSEMessage(sourceID string) string {
-	m := jsonpb.Marshaler{}
-	s, err := m.MarshalToString(&loggregator_v2.EnvelopeBatch{
+	b, err := protojson.Marshal(&loggregator_v2.EnvelopeBatch{
 		Batch: []*loggregator_v2.Envelope{
 			{
 				SourceId:   sourceID,
@@ -412,7 +411,7 @@ func buildSSEMessage(sourceID string) string {
 	if err != nil {
 		panic(err)
 	}
-	return fmt.Sprintf("data: %s\n\n", s)
+	return fmt.Sprintf("data: %s\n\n", string(b))
 }
 
 var serviceInstancesBody = `
