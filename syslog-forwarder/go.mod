@@ -12,7 +12,7 @@ require (
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.8
-	golang.org/x/net v0.12.0
+	golang.org/x/net v0.13.0
 	google.golang.org/protobuf v1.31.0
 )
 
