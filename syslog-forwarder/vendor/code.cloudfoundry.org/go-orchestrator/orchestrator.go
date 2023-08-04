@@ -1,3 +1,5 @@
+package orchestrator
+
 // Package orchestrator is an algorithm that manages the work of a cluster of
 // nodes. It ensures each piece of work has a worker assigned to it.
 //
@@ -9,7 +11,6 @@
 // The expected workload is stored in memory. Therefore, if the process is
 // restarted the task list is lost. A system with persistence is required to
 // ensure the workload is not lost (e.g., database).
-package orchestrator
 
 import (
 	"context"
@@ -130,7 +131,7 @@ func (o *Orchestrator) NextTerm(ctx context.Context) {
 	toAdd, toRemove := o.delta(actual)
 
 	// Rebalance tasks among workers.
-	toAdd, toRemove = o.rebalance(toAdd, toRemove, actual)
+	toAdd, toRemove = o.Rebalance(toAdd, toRemove, actual)
 	counts := o.counts(actual, toRemove)
 
 	for worker, tasks := range toRemove {
@@ -161,7 +162,7 @@ func (o *Orchestrator) NextTerm(ctx context.Context) {
 // rebalance will rebalance tasks across the workers. If any worker has too
 // many tasks, it will be added to the remove map, and added to the returned
 // add slice.
-func (o *Orchestrator) rebalance(
+func (o *Orchestrator) Rebalance(
 	toAdd map[interface{}]int,
 	toRemove,
 	actual map[interface{}][]interface{},
@@ -187,7 +188,7 @@ func (o *Orchestrator) rebalance(
 	}
 
 	for _, c := range counts {
-		if c.count > maxPerNode {
+		if c.count > maxPerNode && len(actual[c.name]) > 0 {
 			task := actual[c.name][0]
 			toRemove[c.name] = append(toRemove[c.name], task)
 			toAdd[task]++
@@ -270,6 +271,13 @@ type countInfo struct {
 func (o *Orchestrator) counts(actual, toRemove map[interface{}][]interface{}) []countInfo {
 	var results []countInfo
 	for k, v := range actual {
+		if len(v) == 0 {
+			results = append(results, countInfo{
+				name:  k,
+				count: 0,
+			})
+			continue
+		}
 		results = append(results, countInfo{
 			name:  k,
 			count: len(v) - len(toRemove[k]),

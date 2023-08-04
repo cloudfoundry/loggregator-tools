@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/onsi/gomega/format"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 )
 
 type MatchYAMLMatcher struct {
@@ -53,11 +53,11 @@ func normalise(input string) string {
 	var val interface{}
 	err := yaml.Unmarshal([]byte(input), &val)
 	if err != nil {
-		panic(err) // guarded by Match
+		panic(err) // unreachable since Match already calls Unmarshal
 	}
 	output, err := yaml.Marshal(val)
 	if err != nil {
-		panic(err) // guarded by Unmarshal
+		panic(err) // untested section, unreachable since we Unmarshal above
 	}
 	return strings.TrimSpace(string(output))
 }
