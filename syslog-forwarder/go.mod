@@ -12,7 +12,7 @@ require (
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.27.10
-	golang.org/x/net v0.14.0
+	golang.org/x/net v0.15.0
 	google.golang.org/protobuf v1.31.0
 )
 
@@ -31,8 +31,8 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
 	github.com/onsi/ginkgo/v2 v2.11.0 // indirect
-	golang.org/x/sys v0.11.0 // indirect
-	golang.org/x/text v0.12.0 // indirect
+	golang.org/x/sys v0.12.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.9.3 // indirect
 	google.golang.org/genproto v0.0.0-20230526203410-71b5a4ffd15e // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230530153820-e85fd2cbaebc // indirect
