@@ -26,6 +26,11 @@ updates:
     interval: "weekly"
 
 - package-ecosystem: "gomod"
+  directory: "/envelopeemitter"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
   directory: "/https_drain"
   schedule:
     interval: "weekly"
