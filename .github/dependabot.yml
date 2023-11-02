@@ -16,6 +16,11 @@ updates:
     interval: "weekly"
 
 - package-ecosystem: "gomod"
+  directory: "/dummymetron"
+  schedule:
+    interval: "weekly"
+
+- package-ecosystem: "gomod"
   directory: "/echo"
   schedule:
     interval: "weekly"
