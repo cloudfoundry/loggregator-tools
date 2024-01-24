@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/tcpprinter
 
-go 1.19
+go 1.21
 
 require code.cloudfoundry.org/rfc5424 v0.0.0-20201103192249-000122071b78
 

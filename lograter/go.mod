@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/lograter
 
-go 1.19
+go 1.21
 
 require go.uber.org/ratelimit v0.3.0
 

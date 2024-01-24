@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/rlptypereader
 
-go 1.19
+go 1.21
 
 require (
 	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible
