@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/rlpreader
 
-go 1.19
+go 1.21
 
 require (
 	code.cloudfoundry.org/go-loggregator/v9 v9.1.0

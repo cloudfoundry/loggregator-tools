@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/latency-log-cache
 
-go 1.19
+go 1.21
 
 require (
 	code.cloudfoundry.org/go-log-cache/v2 v2.0.6

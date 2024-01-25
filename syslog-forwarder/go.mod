@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/syslog-forwarder
 
-go 1.19
+go 1.21
 
 require (
 	code.cloudfoundry.org/cli v6.40.1+incompatible

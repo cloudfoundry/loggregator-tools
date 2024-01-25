@@ -1,6 +1,6 @@
 module code.cloudfoundry.org/loggregator-tools/latency
 
-go 1.19
+go 1.21
 
 require (
 	github.com/cloudfoundry/noaa v2.1.0+incompatible

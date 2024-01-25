@@ -1,3 +1,3 @@
 module code.cloudfoundry.org/loggregator-tools/logemitter
 
-go 1.19
+go 1.21
