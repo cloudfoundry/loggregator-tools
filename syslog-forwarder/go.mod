@@ -6,7 +6,7 @@ require (
 	code.cloudfoundry.org/cli v6.40.1+incompatible
 	code.cloudfoundry.org/go-envstruct v1.7.0
 	code.cloudfoundry.org/go-log-cache/v2 v2.0.6
-	code.cloudfoundry.org/go-loggregator/v9 v9.1.0
+	code.cloudfoundry.org/go-loggregator/v9 v9.2.0
 	code.cloudfoundry.org/go-orchestrator v1.0.0
 	code.cloudfoundry.org/go-stream-aggregator v0.0.0-20180315223236-6c519ef42085
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a
