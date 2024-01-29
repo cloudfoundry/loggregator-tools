@@ -1,8 +1,8 @@
 # code.cloudfoundry.org/go-diodes v0.0.0-20221102172008-608069b4b4a6
 ## explicit; go 1.18
 code.cloudfoundry.org/go-diodes
-# code.cloudfoundry.org/go-envstruct v1.6.0
-## explicit; go 1.19
+# code.cloudfoundry.org/go-envstruct v1.7.0
+## explicit; go 1.21
 code.cloudfoundry.org/go-envstruct
 # code.cloudfoundry.org/go-loggregator/v9 v9.2.0
 ## explicit; go 1.21
@@ -11,9 +11,6 @@ code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2
 # code.cloudfoundry.org/tlsconfig v0.0.0-20200131000646-bbe0f8da39b3
 ## explicit; go 1.13
 code.cloudfoundry.org/tlsconfig
-# github.com/go-task/slim-sprig v0.0.0-20230315185526-52ccab3ef572
-## explicit; go 1.13
-github.com/go-task/slim-sprig
 # github.com/golang/protobuf v1.5.3
 ## explicit; go 1.9
 github.com/golang/protobuf/jsonpb
@@ -22,27 +19,6 @@ github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-# github.com/google/pprof v0.0.0-20210407192527-94a9f03dee38
-## explicit; go 1.14
-github.com/google/pprof/profile
-# github.com/onsi/ginkgo/v2 v2.15.0
-## explicit; go 1.20
-github.com/onsi/ginkgo/v2/config
-github.com/onsi/ginkgo/v2/formatter
-github.com/onsi/ginkgo/v2/ginkgo
-github.com/onsi/ginkgo/v2/ginkgo/build
-github.com/onsi/ginkgo/v2/ginkgo/command
-github.com/onsi/ginkgo/v2/ginkgo/generators
-github.com/onsi/ginkgo/v2/ginkgo/internal
-github.com/onsi/ginkgo/v2/ginkgo/labels
-github.com/onsi/ginkgo/v2/ginkgo/outline
-github.com/onsi/ginkgo/v2/ginkgo/run
-github.com/onsi/ginkgo/v2/ginkgo/unfocus
-github.com/onsi/ginkgo/v2/ginkgo/watch
-github.com/onsi/ginkgo/v2/internal/interrupt_handler
-github.com/onsi/ginkgo/v2/internal/parallel_support
-github.com/onsi/ginkgo/v2/reporters
-github.com/onsi/ginkgo/v2/types
 # golang.org/x/net v0.20.0
 ## explicit; go 1.18
 golang.org/x/net/context
@@ -61,9 +37,6 @@ golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/tools v0.16.1
-## explicit; go 1.18
-golang.org/x/tools/go/ast/inspector
 # google.golang.org/genproto/googleapis/rpc v0.0.0-20231002182017-d307bd883b97
 ## explicit; go 1.19
 google.golang.org/genproto/googleapis/rpc/status
