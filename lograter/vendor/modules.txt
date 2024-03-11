@@ -1,6 +1,6 @@
 # github.com/benbjohnson/clock v1.3.0
 ## explicit; go 1.15
 github.com/benbjohnson/clock
-# go.uber.org/ratelimit v0.3.0
-## explicit; go 1.18
+# go.uber.org/ratelimit v0.3.1
+## explicit; go 1.20
 go.uber.org/ratelimit
