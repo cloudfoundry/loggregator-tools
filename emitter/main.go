@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"code.cloudfoundry.org/go-envstruct"
-	loggregator "code.cloudfoundry.org/go-loggregator/v9"
-	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
+	loggregator "code.cloudfoundry.org/go-loggregator/v10"
+	"code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2"
 )
 
 type config struct {
