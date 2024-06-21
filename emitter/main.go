@@ -41,7 +41,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	conn, err := grpc.Dial(c.Target, grpc.WithTransportCredentials(
+	conn, err := grpc.NewClient(c.Target, grpc.WithTransportCredentials(
 		credentials.NewTLS(creds),
 	))
 	if err != nil {
