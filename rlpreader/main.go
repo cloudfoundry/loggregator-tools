@@ -13,8 +13,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	loggregator "code.cloudfoundry.org/go-loggregator/v9"
-	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
+	loggregator "code.cloudfoundry.org/go-loggregator/v10"
+	"code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2"
 )
 
 var (
