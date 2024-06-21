@@ -46,7 +46,7 @@ func main() {
 	}
 	transportCreds := credentials.NewTLS(tlsConfig)
 
-	conn, err := grpc.Dial(*target, grpc.WithTransportCredentials(transportCreds))
+	conn, err := grpc.NewClient(*target, grpc.WithTransportCredentials(transportCreds))
 	if err != nil {
 		log.Fatal(err)
 	}
