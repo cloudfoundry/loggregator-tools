@@ -1,5 +1,4 @@
 // envelopeemitter: a tool to emit envelopes via v2 gRPC
-//
 package main
 
 import (
@@ -30,7 +29,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	conn, err := grpc.Dial(*addr, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.NewClient(*addr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatal(err)
 	}
