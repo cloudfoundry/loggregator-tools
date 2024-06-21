@@ -1,6 +1,6 @@
-# code.cloudfoundry.org/go-loggregator v7.4.0+incompatible
-## explicit
-code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2
+# code.cloudfoundry.org/go-loggregator/v10 v10.0.0
+## explicit; go 1.21
+code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2
 # code.cloudfoundry.org/go-loggregator/v9 v9.0.3
 ## explicit; go 1.18
 code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2
@@ -8,20 +8,12 @@ code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2
 ## explicit; go 1.19
 code.cloudfoundry.org/loggregator-release/src/metricemitter
 code.cloudfoundry.org/loggregator-release/src/plumbing
-# code.cloudfoundry.org/rfc5424 v0.0.0-20201103192249-000122071b78
-## explicit
-code.cloudfoundry.org/rfc5424
 # code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921
 ## explicit; go 1.17
 code.cloudfoundry.org/tlsconfig
 # github.com/fsnotify/fsnotify v1.6.0
 ## explicit; go 1.16
-# github.com/go-logr/logr v1.2.3
-## explicit; go 1.16
-# github.com/golang/protobuf v1.5.4
-## explicit; go 1.17
-github.com/golang/protobuf/proto
-# golang.org/x/net v0.22.0
+# golang.org/x/net v0.26.0
 ## explicit; go 1.18
 golang.org/x/net/context
 golang.org/x/net/http/httpguts
@@ -30,11 +22,11 @@ golang.org/x/net/http2/hpack
 golang.org/x/net/idna
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
-# golang.org/x/sys v0.18.0
+# golang.org/x/sys v0.21.0
 ## explicit; go 1.18
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/text v0.14.0
+# golang.org/x/text v0.16.0
 ## explicit; go 1.18
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
@@ -96,8 +88,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# google.golang.org/protobuf v1.33.0
-## explicit; go 1.17
+# google.golang.org/protobuf v1.34.2
+## explicit; go 1.20
 google.golang.org/protobuf/encoding/protojson
 google.golang.org/protobuf/encoding/prototext
 google.golang.org/protobuf/encoding/protowire
@@ -123,13 +115,10 @@ google.golang.org/protobuf/internal/strs
 google.golang.org/protobuf/internal/version
 google.golang.org/protobuf/proto
 google.golang.org/protobuf/protoadapt
-google.golang.org/protobuf/reflect/protodesc
 google.golang.org/protobuf/reflect/protoreflect
 google.golang.org/protobuf/reflect/protoregistry
 google.golang.org/protobuf/runtime/protoiface
 google.golang.org/protobuf/runtime/protoimpl
-google.golang.org/protobuf/types/descriptorpb
-google.golang.org/protobuf/types/gofeaturespb
 google.golang.org/protobuf/types/known/anypb
 google.golang.org/protobuf/types/known/durationpb
 google.golang.org/protobuf/types/known/timestamppb
