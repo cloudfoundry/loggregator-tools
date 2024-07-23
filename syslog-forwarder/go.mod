@@ -5,8 +5,8 @@ go 1.21
 require (
 	code.cloudfoundry.org/cli v6.40.1+incompatible
 	code.cloudfoundry.org/go-envstruct v1.7.0
-	code.cloudfoundry.org/go-log-cache/v2 v2.0.7
-	code.cloudfoundry.org/go-loggregator/v9 v9.2.1
+	code.cloudfoundry.org/go-log-cache/v3 v3.0.1
+	code.cloudfoundry.org/go-loggregator/v10 v10.0.0
 	code.cloudfoundry.org/go-orchestrator v1.0.0
 	code.cloudfoundry.org/go-stream-aggregator v0.0.0-20180315223236-6c519ef42085
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a
@@ -29,10 +29,9 @@ require (
 	github.com/nxadm/tail v1.4.8 // indirect
 	golang.org/x/sys v0.22.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
-	google.golang.org/genproto v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240227224415-6ceb2ff114de // indirect
-	google.golang.org/grpc v1.63.2 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240528184218-531527333157 // indirect
+	google.golang.org/grpc v1.65.0 // indirect
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

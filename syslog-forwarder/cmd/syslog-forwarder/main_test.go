@@ -9,7 +9,7 @@ import (
 	"os/exec"
 	"time"
 
-	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
+	"code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2"
 	"code.cloudfoundry.org/rfc5424"
 	"github.com/onsi/gomega/gexec"
 	"google.golang.org/protobuf/encoding/protojson"
