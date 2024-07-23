@@ -3,7 +3,7 @@ package testhelper
 import (
 	"sync"
 
-	"code.cloudfoundry.org/go-loggregator/v9/pulseemitter"
+	"code.cloudfoundry.org/go-loggregator/v10/pulseemitter"
 )
 
 type TestMetric interface {

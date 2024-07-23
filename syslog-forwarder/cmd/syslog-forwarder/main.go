@@ -5,8 +5,8 @@ import (
 	"os"
 
 	envstruct "code.cloudfoundry.org/go-envstruct"
-	loggregator "code.cloudfoundry.org/go-loggregator/v9"
-	"code.cloudfoundry.org/go-loggregator/v9/rpc/loggregator_v2"
+	loggregator "code.cloudfoundry.org/go-loggregator/v10"
+	"code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2"
 	orchestrator "code.cloudfoundry.org/go-orchestrator"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/stream"
