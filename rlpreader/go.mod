@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	code.cloudfoundry.org/go-loggregator/v10 v10.0.1
-	google.golang.org/grpc v1.67.0
+	google.golang.org/grpc v1.67.1
 )
 
 require (
