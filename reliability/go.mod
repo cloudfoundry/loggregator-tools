@@ -10,7 +10,7 @@ require (
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.34.2
 	github.com/posener/wstest v1.2.0
-	google.golang.org/protobuf v1.34.2
+	google.golang.org/protobuf v1.35.1
 )
 
 require (
