@@ -1,7 +1,7 @@
 module code.cloudfoundry.org/loggregator-tools/syslog-forwarder
 
 go 1.21
-toolchain go1.23.7
+toolchain go1.24.1
 
 require (
 	code.cloudfoundry.org/cli v6.40.1+incompatible
@@ -12,7 +12,7 @@ require (
 	code.cloudfoundry.org/go-stream-aggregator v0.0.0-20180315223236-6c519ef42085
 	code.cloudfoundry.org/rfc5424 v0.0.0-20180905210152-236a6d29298a
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.36.2
+	github.com/onsi/gomega v1.36.3
 	golang.org/x/net v0.37.0
 	google.golang.org/protobuf v1.36.5
 )
