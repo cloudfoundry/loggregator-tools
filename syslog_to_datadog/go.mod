@@ -6,7 +6,7 @@ toolchain go1.24.1
 require (
 	code.cloudfoundry.org/rfc5424 v0.0.0-20201103192249-000122071b78
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.36.3
+	github.com/onsi/gomega v1.37.0
 )
 
 require (
