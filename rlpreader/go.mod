@@ -1,11 +1,11 @@
 module code.cloudfoundry.org/loggregator-tools/rlpreader
 
 go 1.21
-toolchain go1.22.9
+toolchain go1.24.1
 
 require (
 	code.cloudfoundry.org/go-loggregator/v10 v10.1.0
-	google.golang.org/grpc v1.71.0
+	google.golang.org/grpc v1.71.1
 )
 
 require (
