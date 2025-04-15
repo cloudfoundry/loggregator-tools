@@ -110,7 +110,7 @@ func main() {
 func writeLogs(logsPerSecond int, ip, syslogPort, logMsg string, enableTLS bool) {
 	guid := uuid.New()
 	conn := connect(ip, syslogPort, enableTLS)
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	fmt.Println("emitting for guid: " + guid.String())
 	for {
@@ -143,7 +143,7 @@ func emitBatch(batchSize int, guid uuid.UUID, ip, syslogPort, logMsg string, con
 func writeWithRetry(conn net.Conn, ip, syslogPort, msg string, enableTLS bool) (net.Conn, error) {
 	_, err := conn.Write([]byte(msg))
 	if err != nil {
-		conn.Close()
+		conn.Close() //nolint:errcheck
 		conn = connect(ip, syslogPort, enableTLS)
 
 		if opErr, ok := err.(*net.OpError); ok {
