@@ -1,4 +1,4 @@
-# code.cloudfoundry.org/go-log-cache/v3 v3.1.0
+# code.cloudfoundry.org/go-log-cache/v3 v3.1.1
 ## explicit; go 1.23.0
 code.cloudfoundry.org/go-log-cache/v3
 code.cloudfoundry.org/go-log-cache/v3/internal

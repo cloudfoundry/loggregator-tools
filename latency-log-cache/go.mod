@@ -4,7 +4,7 @@ go 1.21
 toolchain go1.24.1
 
 require (
-	code.cloudfoundry.org/go-log-cache/v3 v3.1.0
+	code.cloudfoundry.org/go-log-cache/v3 v3.1.1
 	code.cloudfoundry.org/go-loggregator/v10 v10.2.0
 	github.com/nu7hatch/gouuid v0.0.0-20131221200532-179d4d0c4d8d
 )
