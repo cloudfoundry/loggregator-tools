@@ -127,11 +127,6 @@ jobs:
               pull_number: context.payload.pull_request.number,
               event: 'APPROVE'
             });
-      - name: Dependabot metadata
-        id: metadata
-        uses: dependabot/fetch-metadata@2.3.0
-        with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Enable auto-merge for Dependabot PRs
         run: gh pr merge --auto --merge "$PR_URL"
         env:
