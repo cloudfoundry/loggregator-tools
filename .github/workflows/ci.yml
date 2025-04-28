@@ -109,9 +109,11 @@ jobs:
     # Only proceed if this is a Dependabot‐created PR
     if: >
       github.event_name == 'pull_request' &&
-      github.event.pull_request.user.login == 'dependabot[bot]'
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.repository == 'cloudfoundry/loggregator-tools'
     # Allow the job to approve and merge the PR
     permissions:
+      contents: write
       pull-requests: write
     steps:
       - name: Approve PR
@@ -125,14 +127,13 @@ jobs:
               pull_number: context.payload.pull_request.number,
               event: 'APPROVE'
             });
-      - name: Merge PR
-        uses: actions/github-script@v6.4.1
+      - name: Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@2.3.0
         with:
-          github-token: ${{ secrets.AUTO_MERGE_TOKEN }}
-          script: |
-            await github.rest.pulls.merge({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number,
-              merge_method: 'rebase'
-            });
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for Dependabot PRs
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
