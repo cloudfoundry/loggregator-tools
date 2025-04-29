@@ -50,7 +50,7 @@ jobs:
           - syslogspinner
           - tcpprinter
     steps:
-      - uses: actions/checkout@v4.2.2
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v5.4.0
         with:
           go-version-file: ${{ matrix.dir }}/go.mod
@@ -91,7 +91,7 @@ jobs:
           - syslogspinner
           - tcpprinter
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-go@v3
         with:
           go-version-file: ${{ matrix.dir }}/go.mod
