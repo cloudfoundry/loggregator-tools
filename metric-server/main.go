@@ -22,7 +22,10 @@ func main() {
 }
 
 func helloWorldHandler(w http.ResponseWriter, r *http.Request) {
-	_, _ = w.Write([]byte("Hello World"))
+	_, err := fmt.Fprint(w, "Hello World")
+	if err != nil {
+		fmt.Println("error writing response:", err)
+	}
 }
 
 func metricHandler(w http.ResponseWriter, r *http.Request) {
@@ -34,5 +37,8 @@ func metricHandler(w http.ResponseWriter, r *http.Request) {
 		panic(err)
 	}
 
-	_, _ = w.Write([]byte(fmt.Sprintf(metrics, instances[i%4], instances[i%4], instances[i%4])))
+	_, err = fmt.Fprintf(w, metrics, instances[i%4], instances[i%4], instances[i%4])
+	if err != nil {
+		fmt.Println("error writing response:", err)
+	}
 }
