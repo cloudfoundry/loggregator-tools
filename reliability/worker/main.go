@@ -11,7 +11,7 @@ import (
 	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/client"
 	"code.cloudfoundry.org/loggregator-tools/reliability/worker/internal/reporter"
 
-	"github.com/cloudfoundry/noaa/consumer"
+	"github.com/cloudfoundry/noaa/v2/consumer"
 )
 
 func main() {
