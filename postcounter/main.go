@@ -24,7 +24,10 @@ func main() {
 			pt.countPost()
 		} else {
 			count := pt.getCounts(countDuration)
-			_, _ = w.Write([]byte(fmt.Sprint(count)))
+			_, err := fmt.Fprintln(w, count)
+			if err != nil {
+				log.Println("error writing response:", err)
+			}
 		}
 	})
 
