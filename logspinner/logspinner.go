@@ -42,7 +42,10 @@ func rootResponse(res http.ResponseWriter, req *http.Request) {
 
 	go outputLog(cycleCount, delay, logText)
 
-	fmt.Fprintf(res, "cycles %d, delay %s, text %s\n", cycleCount, delay, logText)
+	_, err = fmt.Fprintf(res, "cycles %d, delay %s, text %s\n", cycleCount, delay, logText)
+	if err != nil {
+		fmt.Println("error writing response:", err)
+	}
 }
 
 func outputLog(cycleCount int, delay time.Duration, logText string) {
