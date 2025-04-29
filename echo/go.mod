@@ -6,7 +6,7 @@ toolchain go1.24.1
 require (
 	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible
 	code.cloudfoundry.org/loggregator-release/src v0.0.0-20221209221420-7630348fe6a6
-	google.golang.org/grpc v1.71.1
+	google.golang.org/grpc v1.72.0
 )
 
 require (
@@ -15,9 +15,9 @@ require (
 	code.cloudfoundry.org/tlsconfig v0.0.0-20220621140725-0e6fbd869921 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
-	google.golang.org/protobuf v1.36.4 // indirect
+	golang.org/x/net v0.35.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250218202821-56aae31c358a // indirect
+	google.golang.org/protobuf v1.36.5 // indirect
 )
