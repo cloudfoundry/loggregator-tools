@@ -48,7 +48,7 @@ func main() {
 		log.Fatalf("failed to load client credentials: %s", err)
 	}
 
-	conn, err := grpc.Dial(dopplerAddr, grpc.WithTransportCredentials(creds))
+	conn, err := grpc.NewClient(dopplerAddr, grpc.WithTransportCredentials(creds))
 	if err != nil {
 		log.Fatalf("failed to dial doppler: %s", err)
 	}
