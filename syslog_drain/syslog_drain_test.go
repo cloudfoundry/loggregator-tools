@@ -68,7 +68,8 @@ var _ = Describe("SyslogDrain", func() {
 	})
 
 	AfterEach(func() {
-		writer.Close()
+		err := writer.Close()
+		Expect(err).ToNot(HaveOccurred())
 		session.Kill()
 		ts.Close()
 	})

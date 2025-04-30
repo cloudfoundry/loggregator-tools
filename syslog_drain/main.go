@@ -39,7 +39,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer l.Close()
+	defer l.Close() //nolint:errcheck
 	log.Print("Listening on " + os.Getenv("PORT"))
 
 	counters = make(map[string]*Counter)
@@ -85,7 +85,7 @@ func reportCounts(interval time.Duration) {
 }
 
 func handle(conn net.Conn) {
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	var msg rfc5424.Message
 	for {
