@@ -46,6 +46,6 @@ func (s *server) Start() {
 func echoHandler(_ http.ResponseWriter, r *http.Request) {
 	bytes := make([]byte, 1024)
 	byteCount, _ := r.Body.Read(bytes)
-	r.Body.Close()
+	r.Body.Close() //nolint:errcheck
 	fmt.Printf("%s\n", bytes[:byteCount])
 }
