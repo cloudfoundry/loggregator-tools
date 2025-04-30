@@ -75,7 +75,7 @@ func (f *fakeWSServer) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	atomic.AddInt64(&f._connections, 1)
 
