@@ -144,7 +144,7 @@ func (p *Processor) rawPost(body io.Reader) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	if resp.StatusCode > 299 || resp.StatusCode < 200 {
 		body, err := io.ReadAll(resp.Body)
