@@ -53,7 +53,7 @@ var _ = Describe("TLSWriter", func() {
 			binding,
 			netConf,
 		)
-		defer writer.Close()
+		defer writer.Close() //nolint:errcheck
 
 		var conn net.Conn
 		go func() {

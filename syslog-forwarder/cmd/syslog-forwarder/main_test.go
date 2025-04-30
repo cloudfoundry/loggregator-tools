@@ -92,7 +92,7 @@ var _ = Describe("Main", func() {
 		fakeSyslog = httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			body, err := io.ReadAll(r.Body)
 			Expect(err).ToNot(HaveOccurred())
-			defer r.Body.Close()
+			defer r.Body.Close() //nolint:errcheck
 
 			syslogReqs <- r
 			syslogBodies <- body
