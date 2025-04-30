@@ -22,7 +22,8 @@ func NewCounter(n int) Counter {
 }
 
 func (c *Counter) SetHandler(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
+
 	var counts []messageCount
 	if err := json.NewDecoder(r.Body).Decode(&counts); err != nil {
 		log.Printf("Failed to unmarshal JSON request body: %s", err)
@@ -32,6 +33,7 @@ func (c *Counter) SetHandler(w http.ResponseWriter, r *http.Request) {
 
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
 	for _, m := range counts {
 		c.counts.Value = m
 		c.counts = c.counts.Next()
@@ -51,7 +53,10 @@ func (c *Counter) GetHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	c.mu.RUnlock()
 
-	fmt.Fprint(w, count)
+	_, err := fmt.Fprint(w, count)
+	if err != nil {
+		fmt.Println("could not write response:", err)
+	}
 }
 
 func (c *Counter) GetPrimeHandler(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +72,10 @@ func (c *Counter) GetPrimeHandler(w http.ResponseWriter, r *http.Request) {
 	})
 	c.mu.RUnlock()
 
-	fmt.Fprint(w, count)
+	_, err := fmt.Fprint(w, count)
+	if err != nil {
+		fmt.Println("could not write response:", err)
+	}
 }
 
 type messageCount struct {
