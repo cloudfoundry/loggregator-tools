@@ -126,7 +126,10 @@ func (h *latencyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "%f\n", avg.Seconds())
+	_, err = fmt.Fprintf(w, "%f\n", avg.Seconds())
+	if err != nil {
+		log.Println("error writing response:", err)
+	}
 }
 
 func sampleSize(r *http.Request) int {
@@ -149,7 +152,7 @@ func (h *latencyHandler) executeLatencyTest(sampleQuantity int) (time.Duration, 
 	consumer := consumer.New(h.location.String(), &tls.Config{InsecureSkipVerify: true}, nil)
 	consumer.SetDebugPrinter(ConsoleDebugPrinter{})
 	msgChan, errorChan := consumer.Stream(appID, h.token)
-	defer consumer.Close()
+	defer consumer.Close() //nolint:errcheck
 
 	go func() {
 		for err := range errorChan {
@@ -227,7 +230,7 @@ Loop:
 
 func computeAverages(results map[string]time.Duration) (time.Duration, error) {
 	if len(results) == 0 {
-		return 0, errors.New("No results.")
+		return 0, errors.New("no results")
 	}
 
 	var totalDuration time.Duration

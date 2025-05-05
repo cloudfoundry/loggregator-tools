@@ -77,7 +77,8 @@ func (h *Handler) reportCount(interval time.Duration) {
 }
 
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
+	defer r.Body.Close() //nolint:errcheck
+
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)

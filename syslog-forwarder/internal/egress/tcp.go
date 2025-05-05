@@ -205,7 +205,7 @@ func (w *TCPWriter) Write(env *loggregator_v2.Envelope) error {
 }
 
 func removeNulls(msg []byte) []byte {
-	return bytes.Replace(msg, []byte{0}, nil, -1)
+	return bytes.ReplaceAll(msg, []byte{0}, nil)
 }
 
 func appendNewline(msg []byte) []byte {
@@ -230,7 +230,7 @@ func generateProcessID(sourceType, sourceInstance string) string {
 	sourceType = strings.ToUpper(sourceType)
 	if sourceInstance != "" {
 		return fmt.Sprintf("[%s/%s]",
-			strings.Replace(sourceType, " ", "-", -1),
+			strings.ReplaceAll(sourceType, " ", "-"),
 			sourceInstance,
 		)
 	}

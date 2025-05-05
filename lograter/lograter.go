@@ -12,6 +12,7 @@ import (
 	"os"
 	"strconv"
 	"time"
+
 	"go.uber.org/ratelimit"
 )
 
@@ -43,7 +44,10 @@ func rootResponse(res http.ResponseWriter, req *http.Request) {
 
 	go outputLog(rate, duration, logText)
 
-	fmt.Fprintf(res, "rate %d, duration %s, text %s\n", rate, duration, logText)
+	_, err = fmt.Fprintf(res, "rate %d, duration %s, text %s\n", rate, duration, logText)
+	if err != nil {
+		fmt.Println("error writing response:", err)
+	}
 }
 
 func outputLog(rate int, duration time.Duration, logText string) {

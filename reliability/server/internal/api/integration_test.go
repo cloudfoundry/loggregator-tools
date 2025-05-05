@@ -59,6 +59,6 @@ func attachWorker(workerHandler http.Handler) func() {
 	}()
 
 	return func() {
-		c.Close()
+		c.Close() //nolint:errcheck
 	}
 }

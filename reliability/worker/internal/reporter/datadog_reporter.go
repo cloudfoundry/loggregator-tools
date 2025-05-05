@@ -42,7 +42,7 @@ func (r *DataDogReporter) Report(t *TestResult) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	log.Printf("datadog response status code: %d", resp.StatusCode)
 	if resp.StatusCode != http.StatusCreated &&

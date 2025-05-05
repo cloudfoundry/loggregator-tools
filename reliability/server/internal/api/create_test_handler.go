@@ -53,7 +53,10 @@ func (h *CreateTestHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	err = h.attemptRun(t)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprint(w, err)
+		_, err = fmt.Fprint(w, err)
+		if err != nil {
+			log.Printf("failed to write response: %s", err)
+		}
 		return
 	}
 

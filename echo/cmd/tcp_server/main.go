@@ -101,7 +101,7 @@ func (s *server) listenTLS(address string, certPath, keyPath string) {
 }
 
 func (s *server) handleConnection(conn net.Conn) {
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 	err := conn.SetReadDeadline(time.Now().Add(readDeadline))
 	if err != nil {
 		return

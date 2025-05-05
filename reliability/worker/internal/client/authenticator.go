@@ -36,11 +36,11 @@ func (a *UAAClient) Token() (string, error) {
 		return "", err
 	}
 	if response.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("Expected 200 status code from /oauth/token, got %d", response.StatusCode)
+		return "", fmt.Errorf("expected 200 status code from /oauth/token, got %d", response.StatusCode)
 	}
 
 	body, err := io.ReadAll(response.Body)
-	response.Body.Close()
+	response.Body.Close() //nolint:errcheck
 	if err != nil {
 		return "", err
 	}
@@ -53,7 +53,7 @@ func (a *UAAClient) Token() (string, error) {
 
 	accessTokenInterface, ok := oauthResponse["access_token"]
 	if !ok {
-		return "", errors.New("No access_token on UAA oauth response")
+		return "", errors.New("no access_token on UAA oauth response")
 	}
 
 	accessToken, ok := accessTokenInterface.(string)

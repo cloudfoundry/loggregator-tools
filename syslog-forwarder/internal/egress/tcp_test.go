@@ -36,7 +36,8 @@ var _ = Describe("TCPWriter", func() {
 	})
 
 	AfterEach(func() {
-		listener.Close()
+		err := listener.Close()
+		Expect(err).ToNot(HaveOccurred())
 	})
 
 	Describe("Write()", func() {

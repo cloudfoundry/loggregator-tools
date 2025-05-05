@@ -79,7 +79,7 @@ func (s *WorkerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 
 	s.mu.Lock()
 	s.conns[conn] = struct{}{}
@@ -91,7 +91,7 @@ func (s *WorkerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 		delete(s.conns, conn)
 		log.Println("worker has been removed")
-		conn.Close()
+		conn.Close() //nolint:errcheck
 	}()
 
 	log.Println("worker has connected")

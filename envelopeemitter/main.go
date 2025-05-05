@@ -33,7 +33,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer conn.Close()
+	defer conn.Close() //nolint:errcheck
 	c := loggregator_v2.NewIngressClient(conn)
 
 	// create env

@@ -224,7 +224,7 @@ func newStubCurler() *stubCurler {
 }
 
 func (s *stubCurler) Curl(URL, method, body string) ([]byte, error) {
-	URL = strings.Replace(URL, "%2C", ",", -1)
+	URL = strings.ReplaceAll(URL, "%2C", ",")
 
 	s.URLs = append(s.URLs, URL)
 	s.methods = append(s.methods, method)

@@ -17,10 +17,12 @@ func main() {
 	logRequests := os.Getenv("SKIP_REQUEST_LOGGING") == "" || os.Getenv("SKIP_REQUEST_LOGGING") != "true"
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		defer r.Body.Close()
+		defer r.Body.Close() //nolint:errcheck
+
 		if logRequests {
 			log.Printf("Request: %+v", r)
 		}
+
 		data, err := io.ReadAll(r.Body)
 		if err != nil {
 			log.Printf("Error reading body: %s", err)
