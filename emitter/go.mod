@@ -1,12 +1,13 @@
 module code.cloudfoundry.org/loggregator-tools/emitter
 
-go 1.21
+go 1.23.0
+
 toolchain go1.24.1
 
 require (
 	code.cloudfoundry.org/go-envstruct v1.7.0
 	code.cloudfoundry.org/go-loggregator/v10 v10.2.0
-	google.golang.org/grpc v1.72.0
+	google.golang.org/grpc v1.72.1
 )
 
 require (
