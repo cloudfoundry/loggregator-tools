@@ -1,6 +1,7 @@
 package egress_test
 
 import (
+	"context"
 	"errors"
 	"net/url"
 	"sync"
@@ -10,7 +11,6 @@ import (
 	loggregator "code.cloudfoundry.org/go-loggregator/v10"
 	v2 "code.cloudfoundry.org/go-loggregator/v10/rpc/loggregator_v2"
 	"code.cloudfoundry.org/loggregator-tools/syslog-forwarder/internal/egress"
-	"golang.org/x/net/context"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
