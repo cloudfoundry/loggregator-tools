@@ -95,7 +95,7 @@ jobs:
       - uses: actions/setup-go@v6
         with:
           go-version-file: ${{ matrix.dir }}/go.mod
-      - uses: golangci/golangci-lint-action@v9.0.0
+      - uses: golangci/golangci-lint-action@v9.1.0
         with:
           working-directory: ${{ matrix.dir }}
 
