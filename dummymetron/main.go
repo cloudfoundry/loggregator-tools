@@ -2,12 +2,12 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 
-	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 
 	"code.cloudfoundry.org/go-loggregator/rpc/loggregator_v2"
