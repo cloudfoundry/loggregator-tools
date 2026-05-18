@@ -5,7 +5,7 @@ go 1.25.0
 require (
 	code.cloudfoundry.org/go-loggregator v7.4.0+incompatible
 	code.cloudfoundry.org/loggregator-release/src v0.0.0-20221209221420-7630348fe6a6
-	google.golang.org/grpc v1.81.0
+	google.golang.org/grpc v1.81.1
 )
 
 require (
