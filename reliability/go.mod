@@ -7,7 +7,7 @@ require (
 	github.com/cloudfoundry/sonde-go v0.0.0-20250403123151-62edc04c2604
 	github.com/gorilla/websocket v1.5.3
 	github.com/onsi/ginkgo v1.16.5
-	github.com/onsi/gomega v1.43.0
+	github.com/onsi/gomega v1.43.1
 	github.com/posener/wstest v1.2.0
 	google.golang.org/protobuf v1.36.12
 )
@@ -21,7 +21,7 @@ require (
 	github.com/google/pprof v0.0.0-20260115054156-294ebfa9ad83 // indirect
 	github.com/nxadm/tail v1.4.11 // indirect
 	github.com/onsi/ginkgo/v2 v2.28.1 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/mod v0.36.0 // indirect
 	golang.org/x/net v0.56.0 // indirect
 	golang.org/x/sync v0.21.0 // indirect
